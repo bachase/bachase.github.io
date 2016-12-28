@@ -382,7 +382,7 @@
   <span class="comment">// Times with epoch/measurements approprate for sharing with peers</span>
   <span class="keyword">using</span> <span class="identifier">NetTime_t</span> <span class="special">=</span> <span class="identifier">Time</span><span class="special">;</span>
   <span class="keyword">using</span> <span class="identifier">Ledger_t</span> <span class="special">=</span> <span class="identifier">Ledger</span><span class="special">;</span>
-  <span class="keyword">using</span> <span class="identifier">Proposal_t</span> <span class="special">=</span> <span class="identifier">ConsensusProposal</span><span class="special">&lt;..&gt;;</span>
+  <span class="keyword">using</span> <span class="identifier">NodeID_t</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">uint32_t</span><span class="special">;</span>
   <span class="keyword">using</span> <span class="identifier">TxSet_t</span> <span class="special">=</span> <span class="identifier">TxSet</span><span class="special">;</span>
   <span class="comment">// To be removed; currently needed to handle missing SHAMap node exception</span>
   <span class="keyword">using</span> <span class="identifier">MissingTxException_t</span> <span class="special">=</span> <span class="identifier">MissingTx</span><span class="special">;</span>
@@ -396,11 +396,12 @@
     <span class="comment">// Attempt to acquire a specific ledger.</span>
     <span class="identifier">Ledger</span> <span class="keyword">const</span> <span class="special">*</span> <span class="identifier">acquireLedger</span><span class="special">(</span><span class="identifier">Ledger</span><span class="special">::</span><span class="identifier">ID</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">ledgerID</span><span class="special">);</span>
 
-    <span class="comment">// Get peers' proposed positions.</span>
+    <span class="comment">// Get peers' proposed positions. Returns an iterable</span>
+    <span class="comment">// with value_type convertable to ConsensusPosition&lt;...&gt;</span>
     <span class="keyword">auto</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">proposals</span><span class="special">(</span><span class="identifier">Ledger</span><span class="special">::</span><span class="identifier">ID</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">ledgerID</span><span class="special">);</span>
 
-    <span class="comment">// Acquire the transaction set associated with a proposal.</span>
-    <span class="identifier">TxSet</span> <span class="keyword">const</span> <span class="special">*</span> <span class="identifier">acquireTxSet</span><span class="special">(</span><span class="identifier">Proposal</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">proposal</span><span class="special">);</span>
+    <span class="comment">// Acquire the transaction set associated with a proposed position.</span>
+    <span class="identifier">TxSet</span> <span class="keyword">const</span> <span class="special">*</span> <span class="identifier">acquireTxSet</span><span class="special">(</span><span class="identifier">TxSet</span><span class="special">::</span><span class="identifier">ID</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">setID</span><span class="special">);</span>
 
     <span class="comment">// Whether the open ledger has any transactions</span>
     <span class="keyword">bool</span> <span class="identifier">hasOpenTransactions</span><span class="special">()</span> <span class="keyword">const</span><span class="special">;</span>
@@ -409,7 +410,7 @@
     <span class="keyword">int</span> <span class="identifier">numProposersValidated</span><span class="special">(</span><span class="identifier">Ledger</span><span class="special">::</span><span class="identifier">ID</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">prevLedger</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
 
     <span class="comment">// Number of proposers that have validated a ledger descended from requested ledger.</span>
-    <span class="keyword">int</span> <span class="identifier">numProposersFinished</span><span class="special">(</span><span class="identifier">LedgerHash</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">h</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+    <span class="keyword">int</span> <span class="identifier">numProposersFinished</span><span class="special">(</span><span class="identifier">LedgerHash</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">h</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span><span class="identifier">re</span>
 
     <span class="comment">// Called when a new round of consensus has started</span>
     <span class="keyword">void</span> <span class="identifier">onStartRound</span><span class="special">(</span><span class="identifier">Ledger</span> <span class="keyword">const</span> <span class="special">&amp;);</span>
@@ -430,7 +431,12 @@
                     <span class="keyword">bool</span> <span class="identifier">haveCorrectLCL</span><span class="special">);</span>
 
     <span class="comment">// Propose the position to peers.</span>
-    <span class="keyword">void</span> <span class="identifier">propose</span><span class="special">(</span><span class="identifier">Proposal</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">pos</span><span class="special">);</span>
+    <span class="keyword">void</span> <span class="identifier">propose</span><span class="special">(</span><span class="identifier">ConsensusProposal</span><span class="special">&lt;...&gt;</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">pos</span><span class="special">);</span>
+
+    <span class="comment">// Relay a received peer proposal on to other peer's.</span>
+    <span class="comment">// The argument type should be convertible to ConsensusProposal&lt;...&gt;</span>
+    <span class="comment">// but may be a different type.</span>
+    <span class="keyword">void</span> <span class="identifier">relay</span><span class="special">(</span><span class="identifier">implementation_defined</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">pos</span><span class="special">);</span>
 
     <span class="comment">// Relay disputed transaction to peers</span>
     <span class="keyword">void</span> <span class="identifier">relay</span><span class="special">(</span><span class="identifier">DisputedTx</span><span class="special">&lt;</span><span class="identifier">Txn</span><span class="special">,</span> <span class="identifier">NodeID</span><span class="special">&gt;</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">dispute</span><span class="special">);</span>

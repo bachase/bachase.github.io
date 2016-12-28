@@ -18,7 +18,7 @@
 <a name="rippled.ref.ripple__RCLConsensus.acquireTxSet"></a><a class="link" href="acquireTxSet.html" title="RCLConsensus::acquireTxSet">RCLConsensus::acquireTxSet</a>
 </h4></div></div></div>
 <p>
-          <a class="indexterm" name="idp6504372752"></a>
+          <a class="indexterm" name="id991622"></a>
 Acquire the transaction set associated with a proposal.
         </p>
 <h6>
@@ -27,7 +27,7 @@ Acquire the transaction set associated with a proposal.
         </h6>
 <pre class="programlisting"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">optional</span><span class="special">&lt;</span> <span class="identifier">RCLTxSet</span> <span class="special">&gt;</span>
 <span class="identifier">acquireTxSet</span><span class="special">(</span>
-    <span class="identifier">LedgerProposal</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">position</span><span class="special">);</span>
+    <span class="identifier">RCLTxSet</span><span class="special">::</span><span class="identifier">ID</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">setId</span><span class="special">);</span>
 </pre>
 <h6>
 <a name="rippled.ref.ripple__RCLConsensus.acquireTxSet.h1"></a>
@@ -61,12 +61,12 @@ Acquire the transaction set associated with a proposal.
 <tbody><tr>
 <td>
                   <p>
-                    <code class="computeroutput"><span class="identifier">position</span></code>
+                    <code class="computeroutput"><span class="identifier">setId</span></code>
                   </p>
                 </td>
 <td>
                   <p>
-                    The proposal to acquire transactions for
+                    The transaction set ID associated with the proposal
                   </p>
                 </td>
 </tr></tbody>

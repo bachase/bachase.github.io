@@ -18,7 +18,7 @@
 <a name="rippled.ref.ripple__RCLConsensus.makeInitialPosition"></a><a class="link" href="makeInitialPosition.html" title="RCLConsensus::makeInitialPosition">RCLConsensus::makeInitialPosition</a>
 </h4></div></div></div>
 <p>
-          <a class="indexterm" name="idp6504850624"></a>
+          <a class="indexterm" name="id996218"></a>
 Create our initial position of transactions
           to accept in this round of consensus.
         </p>
@@ -26,7 +26,7 @@ Create our initial position of transactions
 <a name="rippled.ref.ripple__RCLConsensus.makeInitialPosition.h0"></a>
           <span class="phrase"><a name="rippled.ref.ripple__RCLConsensus.makeInitialPosition.synopsis"></a></span><a class="link" href="makeInitialPosition.html#rippled.ref.ripple__RCLConsensus.makeInitialPosition.synopsis">Synopsis</a>
         </h6>
-<pre class="programlisting"><span class="identifier">std</span><span class="special">::</span><span class="identifier">pair</span><span class="special">&lt;</span> <span class="identifier">RCLTxSet</span><span class="special">,</span> <span class="identifier">LedgerProposal</span> <span class="special">&gt;</span>
+<pre class="programlisting"><span class="identifier">std</span><span class="special">::</span><span class="identifier">pair</span><span class="special">&lt;</span> <span class="identifier">RCLTxSet</span><span class="special">,</span> <span class="keyword">typename</span> <span class="identifier">RCLCxPeerPos</span><span class="special">::</span><span class="identifier">Proposal</span> <span class="special">&gt;</span>
 <span class="identifier">makeInitialPosition</span><span class="special">(</span>
     <span class="identifier">RCLCxLedger</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">prevLedger</span><span class="special">,</span>
     <span class="keyword">bool</span> <span class="identifier">isProposing</span><span class="special">,</span>

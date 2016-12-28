@@ -18,7 +18,7 @@
 <a name="rippled.ref.ripple__Consensus.peerProposal"></a><a class="link" href="peerProposal.html" title="Consensus::peerProposal">Consensus::peerProposal</a>
 </h4></div></div></div>
 <p>
-          <a class="indexterm" name="idp6501419392"></a>
+          <a class="indexterm" name="id967851"></a>
 A peer has proposed a new position, adjust our tracking.
         </p>
 <h6>
@@ -28,7 +28,7 @@ A peer has proposed a new position, adjust our tracking.
 <pre class="programlisting"><span class="keyword">bool</span>
 <span class="identifier">peerProposal</span><span class="special">(</span>
     <span class="identifier">NetTime_t</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">now</span><span class="special">,</span>
-    <span class="identifier">Proposal_t</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">newPosition</span><span class="special">);</span>
+    <span class="identifier">Proposal_t</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">newProposal</span><span class="special">);</span>
 </pre>
 <h6>
 <a name="rippled.ref.ripple__Consensus.peerProposal.h1"></a>
@@ -71,12 +71,12 @@ A peer has proposed a new position, adjust our tracking.
 <tr>
 <td>
                   <p>
-                    <code class="computeroutput"><span class="identifier">newPosition</span></code>
+                    <code class="computeroutput"><span class="identifier">newProposal</span></code>
                   </p>
                 </td>
 <td>
                   <p>
-                    The new peer's position
+                    The new proposal from a peer
                   </p>
                 </td>
 </tr>

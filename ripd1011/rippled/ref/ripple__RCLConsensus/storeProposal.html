@@ -18,7 +18,7 @@
 <a name="rippled.ref.ripple__RCLConsensus.storeProposal"></a><a class="link" href="storeProposal.html" title="RCLConsensus::storeProposal">RCLConsensus::storeProposal</a>
 </h4></div></div></div>
 <p>
-          <a class="indexterm" name="idp6505374064"></a>
+          <a class="indexterm" name="id1000437"></a>
 Save the given consensus proposed by a peer with
           nodeID for later use in consensus.
         </p>
@@ -28,7 +28,7 @@ Save the given consensus proposed by a peer with
         </h6>
 <pre class="programlisting"><span class="keyword">void</span>
 <span class="identifier">storeProposal</span><span class="special">(</span>
-    <span class="identifier">LedgerProposal</span><span class="special">::</span><span class="identifier">ref</span> <span class="identifier">proposal</span><span class="special">,</span>
+    <span class="identifier">RCLCxPeerPos</span><span class="special">::</span><span class="identifier">ref</span> <span class="identifier">peerPos</span><span class="special">,</span>
     <span class="identifier">NodeID</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">nodeID</span><span class="special">);</span>
 </pre>
 <h6>
@@ -60,7 +60,7 @@ Save the given consensus proposed by a peer with
 <tr>
 <td>
                   <p>
-                    <code class="computeroutput"><span class="identifier">proposal</span></code>
+                    <code class="computeroutput"><span class="identifier">peerPos</span></code>
                   </p>
                 </td>
 <td>
