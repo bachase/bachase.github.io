@@ -18,7 +18,7 @@
 <a name="rippled.ref.ripple__RCLConsensus.peerProposal"></a><a class="link" href="peerProposal.html" title="RCLConsensus::peerProposal">RCLConsensus::peerProposal</a>
 </h4></div></div></div>
 <p>
-          <span class="emphasis"><em>Inherited from Consensus.</em></span> <a class="indexterm" name="id1000810"></a>
+          <span class="emphasis"><em>Inherited from Consensus.</em></span> <a class="indexterm" name="idp6503886000"></a>
 A
           peer has proposed a new position, adjust our tracking.
         </p>
@@ -28,7 +28,7 @@ A
         </h6>
 <pre class="programlisting"><span class="keyword">bool</span>
 <span class="identifier">peerProposal</span><span class="special">(</span>
-    <span class="identifier">NetTime_t</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">now</span><span class="special">,</span>
+    <span class="identifier">NetClock</span><span class="special">::</span><span class="identifier">time_point</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">now</span><span class="special">,</span>
     <span class="identifier">Proposal_t</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">newProposal</span><span class="special">);</span>
 </pre>
 <h6>

@@ -18,7 +18,7 @@
 <a name="rippled.ref.ripple__RCLConsensus.gotTxSet"></a><a class="link" href="gotTxSet.html" title="RCLConsensus::gotTxSet">RCLConsensus::gotTxSet</a>
 </h4></div></div></div>
 <p>
-          <span class="emphasis"><em>Inherited from Consensus.</em></span> <a class="indexterm" name="id992546"></a>
+          <span class="emphasis"><em>Inherited from Consensus.</em></span> <a class="indexterm" name="idp6503576720"></a>
 Process
           a transaction set, typically acquired from the network.
         </p>
@@ -28,7 +28,7 @@ Process
         </h6>
 <pre class="programlisting"><span class="keyword">void</span>
 <span class="identifier">gotTxSet</span><span class="special">(</span>
-    <span class="identifier">NetTime_t</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">now</span><span class="special">,</span>
+    <span class="identifier">NetClock</span><span class="special">::</span><span class="identifier">time_point</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">now</span><span class="special">,</span>
     <span class="identifier">TxSet_t</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">txSet</span><span class="special">);</span>
 </pre>
 <h6>

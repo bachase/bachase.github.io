@@ -18,7 +18,7 @@
 <a name="rippled.ref.ripple__RCLConsensus.simulate"></a><a class="link" href="simulate.html" title="RCLConsensus::simulate">RCLConsensus::simulate</a>
 </h4></div></div></div>
 <p>
-          <span class="emphasis"><em>Inherited from Consensus.</em></span> <a class="indexterm" name="id999885"></a>
+          <span class="emphasis"><em>Inherited from Consensus.</em></span> <a class="indexterm" name="idp6504225600"></a>
 Simulate
           the consensus process without any network traffic.
         </p>
@@ -28,7 +28,7 @@ Simulate
         </h6>
 <pre class="programlisting"><span class="keyword">void</span>
 <span class="identifier">simulate</span><span class="special">(</span>
-    <span class="identifier">NetTime_t</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">now</span><span class="special">,</span>
+    <span class="identifier">NetClock</span><span class="special">::</span><span class="identifier">time_point</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">now</span><span class="special">,</span>
     <span class="identifier">boost</span><span class="special">::</span><span class="identifier">optional</span><span class="special">&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">chrono</span><span class="special">::</span><span class="identifier">milliseconds</span> <span class="special">&gt;</span> <span class="identifier">consensusDelay</span><span class="special">);</span>
 </pre>
 <h6>

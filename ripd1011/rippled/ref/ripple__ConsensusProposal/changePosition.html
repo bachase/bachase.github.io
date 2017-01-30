@@ -18,7 +18,7 @@
 <a name="rippled.ref.ripple__ConsensusProposal.changePosition"></a><a class="link" href="changePosition.html" title="ConsensusProposal::changePosition">ConsensusProposal::changePosition</a>
 </h4></div></div></div>
 <p>
-          <a class="indexterm" name="id973538"></a>
+          <a class="indexterm" name="idp6501775632"></a>
 Update the position during the consensus
           process.
         </p>
@@ -29,8 +29,8 @@ Update the position during the consensus
 <pre class="programlisting"><span class="keyword">bool</span>
 <span class="identifier">changePosition</span><span class="special">(</span>
     <span class="identifier">Position_t</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">newPosition</span><span class="special">,</span>
-    <span class="identifier">Time_t</span> <span class="identifier">newCloseTime</span><span class="special">,</span>
-    <span class="identifier">Time_t</span> <span class="identifier">now</span><span class="special">);</span>
+    <span class="identifier">NetClock</span><span class="special">::</span><span class="identifier">time_point</span> <span class="identifier">newCloseTime</span><span class="special">,</span>
+    <span class="identifier">NetClock</span><span class="special">::</span><span class="identifier">time_point</span> <span class="identifier">now</span><span class="special">);</span>
 </pre>
 <h6>
 <a name="rippled.ref.ripple__ConsensusProposal.changePosition.h1"></a>

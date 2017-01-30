@@ -1,0 +1,55 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Consensus::phaseEstablish</title>
+<link rel="stylesheet" href="../../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../../index.html" title="rippled">
+<link rel="up" href="../ripple__Consensus.html" title="Consensus">
+<link rel="prev" href="peerProposals_.html" title="Consensus::peerProposals_">
+<link rel="next" href="phasePreClose.html" title="Consensus::phasePreClose">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="peerProposals_.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ripple__Consensus.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="phasePreClose.html"><img src="../../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="rippled.ref.ripple__Consensus.phaseEstablish"></a><a class="link" href="phaseEstablish.html" title="Consensus::phaseEstablish">Consensus::phaseEstablish</a>
+</h4></div></div></div>
+<p>
+          <a class="indexterm" name="idp6501695088"></a>
+Handle establish phase.
+        </p>
+<h6>
+<a name="rippled.ref.ripple__Consensus.phaseEstablish.h0"></a>
+          <span class="phrase"><a name="rippled.ref.ripple__Consensus.phaseEstablish.synopsis"></a></span><a class="link" href="phaseEstablish.html#rippled.ref.ripple__Consensus.phaseEstablish.synopsis">Synopsis</a>
+        </h6>
+<pre class="programlisting"><span class="keyword">void</span>
+<span class="identifier">phaseEstablish</span><span class="special">();</span>
+</pre>
+<h6>
+<a name="rippled.ref.ripple__Consensus.phaseEstablish.h1"></a>
+          <span class="phrase"><a name="rippled.ref.ripple__Consensus.phaseEstablish.description"></a></span><a class="link" href="phaseEstablish.html#rippled.ref.ripple__Consensus.phaseEstablish.description">Description</a>
+        </h6>
+<p>
+          In the establish phase, the ledger has closed and we work with peers to
+          reach consensus. Update our position only on the timer, and in this phase.
+        </p>
+<p>
+          If we have consensus, move to the accepted phase.
+        </p>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2012-2016 Ripple Labs Inc.<p>
+        Distributed under the ISC License
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="peerProposals_.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ripple__Consensus.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="phasePreClose.html"><img src="../../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

@@ -125,18 +125,6 @@
 <tr>
 <td>
                 <p>
-                  <a class="link" href="ripple__Consensus/getLastCloseDuration.html" title="Consensus::getLastCloseDuration"><span class="bold"><strong>getLastCloseDuration</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  Get duration of the previous round.
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
                   <a class="link" href="ripple__Consensus/getLastCloseProposers.html" title="Consensus::getLastCloseProposers"><span class="bold"><strong>getLastCloseProposers</strong></span></a>
                 </p>
               </td>
@@ -144,6 +132,18 @@
                 <p>
                   Get the number of proposing peers that participated in the previous
                   round.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__Consensus/getLastConvergeDuration.html" title="Consensus::getLastConvergeDuration"><span class="bold"><strong>getLastConvergeDuration</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Get duration of the previous round.
                 </p>
               </td>
 </tr>
@@ -178,9 +178,6 @@
                 </p>
               </td>
 <td>
-                <p>
-                  Deleted copy operator.
-                </p>
               </td>
 </tr>
 <tr>
@@ -300,20 +297,44 @@
         Achieves consensus on the next ledger.
       </p>
 <p>
-        Two things need consensus:* The set of transactions included in the ledger.
-        * The close time for the ledger.
+        Two things need consensus:
       </p>
+<div class="orderedlist"><ol class="orderedlist" type="1">
+<li class="listitem">
+            The set of transactions included in the ledger.
+          </li>
+<li class="listitem">
+            The close time for the ledger.
+          </li>
+</ol></div>
 <p>
-        The general consensus stages:* <a class="link" href="ripple__Consensus.html" title="Consensus"><code class="computeroutput"><span class="identifier">Consensus</span></code></a> finishes, we build a new
-        last closed ledger and a new open ledger based on it. * The open ledger interval
-        starts. This gives servers time to finish building the new last closed ledger
-        and fill the new ledger with transactions. * The ledger closes. Servers send
-        their initial proposal. * We do not change our position or declare a consensus
-        for at least LEDGER_MIN_CONSENSUS to ensure servers have a chance to make
-        an initial proposal. * On a frequent timer event, we change our position
-        if needed based on received peer positions. * When we have a consensus, go
-        to step 1.
+        The general consensus stages:
       </p>
+<div class="orderedlist"><ol class="orderedlist" type="1">
+<li class="listitem">
+            <a class="link" href="ripple__Consensus.html" title="Consensus"><code class="computeroutput"><span class="identifier">Consensus</span></code></a>
+            finishes, we build a new last closed ledger and a new open ledger based
+            on it.
+          </li>
+<li class="listitem">
+            The open ledger interval starts. This gives servers time to finish building
+            the new last closed ledger and fill the new ledger with transactions.
+          </li>
+<li class="listitem">
+            The ledger closes. Servers send their initial proposal.
+          </li>
+<li class="listitem">
+            We do not change our position or declare a consensus for at least LEDGER_MIN_CONSENSUS
+            to ensure servers have a chance to make an initial proposal.
+          </li>
+<li class="listitem">
+            On a frequent timer event, we change our position if needed based on
+            received peer positions.
+          </li>
+<li class="listitem">
+            When we have a consensus, go to step 1.
+          </li>
+</ol></div>
 <p>
         This class uses CRTP to allow adapting <a class="link" href="ripple__Consensus.html" title="Consensus"><code class="computeroutput"><span class="identifier">Consensus</span></code></a> for specific applications.
       </p>
@@ -349,8 +370,6 @@
   <span class="comment">// Type of individual transaction comprising the TxSet</span>
   <span class="keyword">using</span> <span class="identifier">Tx</span> <span class="special">=</span> <span class="identifier">Tx</span><span class="special">;</span>
 
-  <span class="keyword">bool</span> <span class="identifier">insert</span><span class="special">(</span><span class="identifier">Tx</span> <span class="keyword">const</span> <span class="special">&amp;);</span>
-  <span class="keyword">bool</span> <span class="identifier">erase</span><span class="special">(</span><span class="identifier">Tx</span><span class="special">::</span><span class="identifier">ID</span> <span class="keyword">const</span> <span class="special">&amp;);</span>
   <span class="keyword">bool</span> <span class="identifier">exists</span><span class="special">(</span><span class="identifier">Tx</span><span class="special">::</span><span class="identifier">ID</span> <span class="keyword">const</span> <span class="special">&amp;)</span> <span class="keyword">const</span><span class="special">;</span>
   <span class="comment">// Return value should have semantics like Tx const *</span>
   <span class="identifier">Tx</span> <span class="keyword">const</span> <span class="special">*</span> <span class="identifier">find</span><span class="special">(</span><span class="identifier">Tx</span><span class="special">::</span><span class="identifier">ID</span> <span class="keyword">const</span> <span class="special">&amp;)</span> <span class="keyword">const</span> <span class="special">;</span>
@@ -359,6 +378,21 @@
   <span class="comment">// Return set of transactions that are not common to this set or other</span>
   <span class="comment">// boolean indicates which set it was in</span>
   <span class="identifier">std</span><span class="special">::</span><span class="identifier">map</span><span class="special">&lt;</span><span class="identifier">Tx</span><span class="special">::</span><span class="identifier">ID</span><span class="special">,</span> <span class="keyword">bool</span><span class="special">&gt;</span> <span class="identifier">compare</span><span class="special">(</span><span class="identifier">TxSet</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+
+  <span class="comment">// A mutable view of transactions</span>
+  <span class="keyword">struct</span> <span class="identifier">MutableTxSet</span>
+  <span class="special">{</span>
+  <span class="keyword">bool</span> <span class="identifier">insert</span><span class="special">(</span><span class="identifier">Tx</span> <span class="keyword">const</span> <span class="special">&amp;);</span>
+  <span class="keyword">bool</span> <span class="identifier">erase</span><span class="special">(</span><span class="identifier">Tx</span><span class="special">::</span><span class="identifier">ID</span> <span class="keyword">const</span> <span class="special">&amp;);</span>
+  <span class="special">};</span>
+  <span class="comment">// get a mutable view of the transactions</span>
+  <span class="identifier">MutablTxSet</span> <span class="identifier">mutableSet</span><span class="special">()</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="comment">// Construct from a mutable view.</span>
+  <span class="identifier">TxSet</span><span class="special">(</span><span class="identifier">MutableTxSet</span> <span class="keyword">const</span> <span class="special">&amp;);</span>
+
+  <span class="comment">// Alternatively, if the TxSet is itself mutable</span>
+  <span class="comment">// just alias MutableTxSet = TxSet</span>
+
 <span class="special">};</span>
 
 <span class="comment">// Agreed upon state that consensus transactions will modify</span>
@@ -379,8 +413,6 @@
 
 <span class="keyword">struct</span> <span class="identifier">Traits</span>
 <span class="special">{</span>
-  <span class="comment">// Times with epoch/measurements approprate for sharing with peers</span>
-  <span class="keyword">using</span> <span class="identifier">NetTime_t</span> <span class="special">=</span> <span class="identifier">Time</span><span class="special">;</span>
   <span class="keyword">using</span> <span class="identifier">Ledger_t</span> <span class="special">=</span> <span class="identifier">Ledger</span><span class="special">;</span>
   <span class="keyword">using</span> <span class="identifier">NodeID_t</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">uint32_t</span><span class="special">;</span>
   <span class="keyword">using</span> <span class="identifier">TxSet_t</span> <span class="special">=</span> <span class="identifier">TxSet</span><span class="special">;</span>
@@ -407,10 +439,10 @@
     <span class="keyword">bool</span> <span class="identifier">hasOpenTransactions</span><span class="special">()</span> <span class="keyword">const</span><span class="special">;</span>
 
     <span class="comment">// Number of proposers that have vallidated the given ledger</span>
-    <span class="keyword">int</span> <span class="identifier">numProposersValidated</span><span class="special">(</span><span class="identifier">Ledger</span><span class="special">::</span><span class="identifier">ID</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">prevLedger</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">proposersValidated</span><span class="special">(</span><span class="identifier">Ledger</span><span class="special">::</span><span class="identifier">ID</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">prevLedger</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
 
     <span class="comment">// Number of proposers that have validated a ledger descended from requested ledger.</span>
-    <span class="keyword">int</span> <span class="identifier">numProposersFinished</span><span class="special">(</span><span class="identifier">LedgerHash</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">h</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span><span class="identifier">re</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">proposersFinished</span><span class="special">(</span><span class="identifier">LedgerHash</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">h</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span><span class="identifier">re</span>
 
     <span class="comment">// Called when a new round of consensus has started</span>
     <span class="keyword">void</span> <span class="identifier">onStartRound</span><span class="special">(</span><span class="identifier">Ledger</span> <span class="keyword">const</span> <span class="special">&amp;);</span>
@@ -447,8 +479,8 @@
           <span class="identifier">Ledger</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">prevLedger</span><span class="special">,</span>
           <span class="keyword">bool</span> <span class="identifier">isProposing</span><span class="special">,</span>
           <span class="keyword">bool</span> <span class="identifier">isCorrectLCL</span><span class="special">,</span>
-          <span class="identifier">Time</span> <span class="identifier">closeTime</span><span class="special">,</span>
-          <span class="identifier">Time</span> <span class="identifier">now</span><span class="special">)</span>
+          <span class="identifier">NetClock</span><span class="special">::</span><span class="identifier">time_point</span> <span class="identifier">closeTime</span><span class="special">,</span>
+          <span class="identifier">NetClock</span><span class="special">::</span><span class="identifier">time_point</span> <span class="identifier">now</span><span class="special">)</span>
 
 
     <span class="comment">// Process the accepted transaction set, generating the newly closed ledger</span>
@@ -491,8 +523,7 @@
               </td>
 <td>
                 <p>
-                  The deriving class which adapts the <span class="red">|6|Consensus</span>
-                  algorithm.
+                  The deriving class which adapts the <a class="link" href="ripple__Consensus.html" title="Consensus"><code class="computeroutput"><span class="identifier">Consensus</span></code></a> algorithm.
                 </p>
               </td>
 </tr>
@@ -504,7 +535,7 @@
               </td>
 <td>
                 <p>
-                  Provides definitions of types used in <span class="red">|6|Consensus</span>.
+                  Provides definitions of types used in <a class="link" href="ripple__Consensus.html" title="Consensus"><code class="computeroutput"><span class="identifier">Consensus</span></code></a>.
                 </p>
               </td>
 </tr>

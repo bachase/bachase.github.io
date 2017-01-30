@@ -18,7 +18,7 @@
 <a name="rippled.ref.ripple__checkConsensus"></a><a class="link" href="ripple__checkConsensus.html" title="checkConsensus">checkConsensus</a>
 </h3></div></div></div>
 <p>
-        <a class="indexterm" name="id1057507"></a>
+        <a class="indexterm" name="idp6509788720"></a>
 Determine whether the network reached consensus and whether
         we joined.
       </p>
@@ -28,10 +28,10 @@ Determine whether the network reached consensus and whether
       </h5>
 <pre class="programlisting"><span class="identifier">ConsensusState</span>
 <span class="identifier">checkConsensus</span><span class="special">(</span>
-    <span class="keyword">int</span> <span class="identifier">previousProposers</span><span class="special">,</span>
-    <span class="keyword">int</span> <span class="identifier">currentProposers</span><span class="special">,</span>
-    <span class="keyword">int</span> <span class="identifier">currentAgree</span><span class="special">,</span>
-    <span class="keyword">int</span> <span class="identifier">currentFinished</span><span class="special">,</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">previousProposers</span><span class="special">,</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">currentProposers</span><span class="special">,</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">currentAgree</span><span class="special">,</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">currentFinished</span><span class="special">,</span>
     <span class="identifier">std</span><span class="special">::</span><span class="identifier">chrono</span><span class="special">::</span><span class="identifier">milliseconds</span> <span class="identifier">previousAgreeTime</span><span class="special">,</span>
     <span class="identifier">std</span><span class="special">::</span><span class="identifier">chrono</span><span class="special">::</span><span class="identifier">milliseconds</span> <span class="identifier">currentAgreeTime</span><span class="special">,</span>
     <span class="keyword">bool</span> <span class="identifier">proposing</span><span class="special">,</span>

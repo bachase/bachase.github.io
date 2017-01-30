@@ -18,7 +18,7 @@
 <a name="rippled.ref.ripple__RCLConsensus.startRound"></a><a class="link" href="startRound.html" title="RCLConsensus::startRound">RCLConsensus::startRound</a>
 </h4></div></div></div>
 <p>
-          <span class="emphasis"><em>Inherited from Consensus.</em></span> <a class="indexterm" name="id1000135"></a>
+          <span class="emphasis"><em>Inherited from Consensus.</em></span> <a class="indexterm" name="idp6504258144"></a>
 Kick-off
           the next round of consensus.
         </p>
@@ -28,7 +28,7 @@ Kick-off
         </h6>
 <pre class="programlisting"><span class="keyword">void</span>
 <span class="identifier">startRound</span><span class="special">(</span>
-    <span class="identifier">NetTime_t</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">now</span><span class="special">,</span>
+    <span class="identifier">NetClock</span><span class="special">::</span><span class="identifier">time_point</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">now</span><span class="special">,</span>
     <span class="keyword">typename</span> <span class="identifier">Ledger_t</span><span class="special">::</span><span class="identifier">ID</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">prevLgrId</span><span class="special">,</span>
     <span class="identifier">Ledger_t</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">prevLgr</span><span class="special">);</span>
 </pre>
