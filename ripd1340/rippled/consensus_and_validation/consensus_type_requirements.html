@@ -19,9 +19,6 @@
       Type Requirements</a>
 </h3></div></div></div>
 <p>
-        <span class="bold"><strong>Should I delete this section?</strong></span>
-      </p>
-<p>
         The consensus type requirements are given below as minimal implementation
         stubs. Actual implementations would augment these stubs with members appropriate
         for managing the details of transactions and ledgers within the larger application
@@ -49,10 +46,10 @@
         Set</a>
       </h5>
 <p>
-        The transaction set type <code class="literal">TxSet</code> represents a set of <code class="literal">Tx=s
-        that are collectively under consideration by consensus. A =TxSet</code>
-        can be compared against other =TxSet=s (typically from peers) and can be
-        modified to add or remove transactions via a mutable subtype.
+        The transaction set type <code class="literal">TxSet</code> represents a set of <code class="literal">Tx</code>s
+        that are collectively under consideration by consensus. A <code class="literal">TxSet</code>
+        can be compared against other <code class="literal">TxSet</code>s (typically from peers)
+        and can be modified to add or remove transactions via the mutable subtype.
       </p>
 <pre class="programlisting"><span class="keyword">struct</span> <span class="identifier">TxSet</span>
 <span class="special">{</span>
@@ -90,12 +87,12 @@
         <span class="phrase"><a name="rippled.consensus_and_validation.consensus_type_requirements.ledger"></a></span><a class="link" href="consensus_type_requirements.html#rippled.consensus_and_validation.consensus_type_requirements.ledger">Ledger</a>
       </h5>
 <p>
-        The ledger type <code class="literal">Ledger</code> represents the state shared amongst
-        the distributed participants. Notice that the details of how the next ledger
+        The <code class="literal">Ledger</code> type represents the state shared amongst the
+        distributed participants. Notice that the details of how the next ledger
         is generated from the prior ledger and the consensus accepted transaction
-        set is not part of the interface. Instead, this type is primarily used to
-        know that peers are working on the same tip of the ledger chain and to provide
-        some basic timing data for consensus.
+        set is not part of the interface. Within the generic code, this type is primarily
+        used to know that peers are working on the same tip of the ledger chain and
+        to provide some basic timing data for consensus.
       </p>
 <pre class="programlisting"><span class="keyword">struct</span> <span class="identifier">Ledger</span>
 <span class="special">{</span>
@@ -129,17 +126,17 @@
         Consensus Interface</a>
       </h5>
 <p>
-        Following the <a href="https://en.wikipedia.org/wiki/Curiously/recurring/template_pattern" target="_top">CRTP</a>
+        Following the <a href="https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern" target="_top">CRTP</a>
         idiom, generic <code class="literal">Consensus</code> relies on a deriving class implementing
         a set of helpers and callbacks that encapsulate implementation specific details
         of the algorithm. Below are excerpts of the generic consensus implementation
         and of helper types that will interact with the concrete implementing class.
       </p>
-<pre class="programlisting"><span class="comment">// Represents our proposed position or a peer's proposed position template</span>
-<span class="special">&lt;</span><span class="keyword">class</span> <span class="identifier">NodeID_t</span><span class="special">,</span> <span class="keyword">class</span> <span class="identifier">LedgerID_t</span><span class="special">,</span> <span class="keyword">class</span> <span class="identifier">Position_t</span><span class="special">&gt;</span> <span class="keyword">class</span> <span class="identifier">ConsensusProposal</span><span class="special">;</span>
+<pre class="programlisting"><span class="comment">// Represents our proposed position or a peer's proposed position</span>
+<span class="keyword">template</span> <span class="special">&lt;</span><span class="keyword">class</span> <span class="identifier">NodeID_t</span><span class="special">,</span> <span class="keyword">class</span> <span class="identifier">LedgerID_t</span><span class="special">,</span> <span class="keyword">class</span> <span class="identifier">Position_t</span><span class="special">&gt;</span> <span class="keyword">class</span> <span class="identifier">ConsensusProposal</span><span class="special">;</span>
 
-<span class="comment">// Represents a transction under dispute this round template &lt;class Tx_t, class</span>
-<span class="identifier">NodeID_t</span><span class="special">&gt;</span> <span class="keyword">class</span> <span class="identifier">DisputedTx</span><span class="special">;</span>
+<span class="comment">// Represents a transction under dispute this round</span>
+<span class="keyword">template</span> <span class="special">&lt;</span><span class="keyword">class</span> <span class="identifier">Tx_t</span><span class="special">,</span> <span class="keyword">class</span> <span class="identifier">NodeID_t</span><span class="special">&gt;</span> <span class="keyword">class</span> <span class="identifier">DisputedTx</span><span class="special">;</span>
 
 <span class="keyword">template</span> <span class="special">&lt;</span><span class="keyword">class</span> <span class="identifier">Derived</span><span class="special">,</span> <span class="keyword">class</span> <span class="identifier">Traits</span><span class="special">&gt;</span> <span class="keyword">class</span> <span class="identifier">Consensus</span>
 <span class="special">{</span>
@@ -155,7 +152,7 @@
     <span class="special">};</span>
 
     <span class="comment">// Initial ledger close times, not rounded by closeTimeResolution</span>
-    <span class="comment">// Used to gauge degree of synchronization between  a node and its peers</span>
+    <span class="comment">// Used to gauge degree of synchronization between a node and its peers</span>
     <span class="keyword">struct</span> <span class="identifier">CloseTimes</span>
     <span class="special">{</span>
         <span class="identifier">std</span><span class="special">::</span><span class="identifier">map</span><span class="special">&lt;</span><span class="identifier">NetClock</span><span class="special">::</span><span class="identifier">time_point</span><span class="special">,</span> <span class="keyword">int</span><span class="special">&gt;</span> <span class="identifier">peers</span><span class="special">;</span>
@@ -299,7 +296,7 @@
 <li class="listitem">
             The calls to <code class="literal">acquireLedger</code> and <code class="literal">acquireTxSet</code>
             only have non-trivial return if the ledger or transaction set of interest
-            is available. The implementing class is free to block while acquire,
+            is available. The implementing class is free to block while acquiring,
             or return the empty option while servicing the request asynchronously.
             Due to legacy reasons, the two calls are not symmetric. <code class="literal">acquireTxSet</code>
             requires the host application to call <code class="literal">gotTxSet</code> when
