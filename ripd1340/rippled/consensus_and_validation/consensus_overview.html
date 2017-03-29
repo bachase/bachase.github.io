@@ -280,20 +280,6 @@
       </p>
 <h4>
 <a name="rippled.consensus_and_validation.consensus_overview.h5"></a>
-        <span class="phrase"><a name="rippled.consensus_and_validation.consensus_overview.accept"></a></span><a class="link" href="consensus_overview.html#rippled.consensus_and_validation.consensus_overview.accept">Accept</a>
-      </h4>
-<p>
-        The accept phase is the terminal phase of the consensus algorithm. Calls
-        to <code class="literal">timerEntry</code>, <code class="literal">peerProposal</code> and <code class="literal">gotTxSet</code>
-        will not change the internal consensus state. A call to <code class="literal">startRound</code>
-        will kick off the next consensus round. It provides the new prior ledger,
-        prior ledger ID and whether the round should begin in the proposing or observing
-        mode. After setting some initial state, the phase transitions to <code class="literal">Open</code>.
-        The node will check if the provided prior ledger and ID are correct, updating
-        the mode and requesting the proper ledger from the network if necessary.
-      </p>
-<h4>
-<a name="rippled.consensus_and_validation.consensus_overview.h6"></a>
         <span class="phrase"><a name="rippled.consensus_and_validation.consensus_overview.open"></a></span><a class="link" href="consensus_overview.html#rippled.consensus_and_validation.consensus_overview.open">Open</a>
       </h4>
 <p>
@@ -357,7 +343,7 @@
         <a name="disputes_image"></a><span class="inlinemediaobject"><img src="../../images/consensus/disputes.png" width="20%"></span>
       </p>
 <h4>
-<a name="rippled.consensus_and_validation.consensus_overview.h7"></a>
+<a name="rippled.consensus_and_validation.consensus_overview.h6"></a>
         <span class="phrase"><a name="rippled.consensus_and_validation.consensus_overview.establish"></a></span><a class="link" href="consensus_overview.html#rippled.consensus_and_validation.consensus_overview.establish">Establish</a>
       </h4>
 <p>
@@ -479,10 +465,28 @@
         transactions that did not make the consensus set and updating any internal
         state based on the consensus progress.
       </p>
+<h4>
+<a name="rippled.consensus_and_validation.consensus_overview.h7"></a>
+        <span class="phrase"><a name="rippled.consensus_and_validation.consensus_overview.accept"></a></span><a class="link" href="consensus_overview.html#rippled.consensus_and_validation.consensus_overview.accept">Accept</a>
+      </h4>
+<p>
+        The <code class="literal">Accept</code> phase is the terminal phase of the consensus
+        algorithm. Calls to <code class="literal">timerEntry</code>, <code class="literal">peerProposal</code>
+        and <code class="literal">gotTxSet</code> will not change the internal consensus state
+        while in the accept phase. The expectation is that the application specific
+        code is working to generate the new ledger based on the consensus outcome.
+        Once complete, that code should make a call to <code class="literal">startRound</code>
+        to kick off the next consensus round. The <code class="literal">startRound</code> call
+        includes the new prior ledger, prior ledger ID and whether the round should
+        begin in the proposing or observing mode. After setting some initial state,
+        the phase transitions to <code class="literal">Open</code>. The node will also check
+        if the provided prior ledger and ID are correct, updating the mode and requesting
+        the proper ledger from the network if necessary.
+      </p>
 </div>
 <table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
 <td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright &#169; 2012-2016 Ripple Labs Inc.<p>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2012-2017 Ripple Labs Inc.<p>
         Distributed under the ISC License
       </p>
 </div></td>
