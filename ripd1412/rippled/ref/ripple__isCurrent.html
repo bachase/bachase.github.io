@@ -1,0 +1,136 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>isCurrent</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="rippled">
+<link rel="up" href="../ref.html" title="Reference">
+<link rel="prev" href="ripple__increaseLedgerTimeResolutionEvery.html" title="increaseLedgerTimeResolutionEvery">
+<link rel="next" href="ripple__jss__JSS.html" title="jss::JSS">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="ripple__increaseLedgerTimeResolutionEvery.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="ripple__jss__JSS.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="rippled.ref.ripple__isCurrent"></a><a class="link" href="ripple__isCurrent.html" title="isCurrent">isCurrent</a>
+</h3></div></div></div>
+<p>
+        <a class="indexterm" name="idp6512004128"></a>
+Whether a validation is still current.
+      </p>
+<h5>
+<a name="rippled.ref.ripple__isCurrent.h0"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__isCurrent.synopsis"></a></span><a class="link" href="ripple__isCurrent.html#rippled.ref.ripple__isCurrent.synopsis">Synopsis</a>
+      </h5>
+<pre class="programlisting"><span class="keyword">bool</span>
+<span class="identifier">isCurrent</span><span class="special">(</span>
+    <span class="identifier">ValidationParms</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">p</span><span class="special">,</span>
+    <span class="identifier">NetClock</span><span class="special">::</span><span class="identifier">time_point</span> <span class="identifier">now</span><span class="special">,</span>
+    <span class="identifier">NetClock</span><span class="special">::</span><span class="identifier">time_point</span> <span class="identifier">signTime</span><span class="special">,</span>
+    <span class="identifier">NetClock</span><span class="special">::</span><span class="identifier">time_point</span> <span class="identifier">seenTime</span><span class="special">);</span>
+</pre>
+<h5>
+<a name="rippled.ref.ripple__isCurrent.h1"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__isCurrent.description"></a></span><a class="link" href="ripple__isCurrent.html#rippled.ref.ripple__isCurrent.description">Description</a>
+      </h5>
+<p>
+        Determines whether a validation can still be considered the current validation
+        from a node based on when it was signed by that node and first seen by this
+        node.
+      </p>
+<h5>
+<a name="rippled.ref.ripple__isCurrent.h2"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__isCurrent.parameters"></a></span><a class="link" href="ripple__isCurrent.html#rippled.ref.ripple__isCurrent.parameters">Parameters</a>
+      </h5>
+<div class="informaltable"><table class="table">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
+                <p>
+                  Name
+                </p>
+              </th>
+<th>
+                <p>
+                  Description
+                </p>
+              </th>
+</tr></thead>
+<tbody>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><span class="identifier">p</span></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  <span class="red">|6|ValidationParms</span> with timing parameters
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><span class="identifier">now</span></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Current time
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><span class="identifier">signTime</span></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  When the validation was signed
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><span class="identifier">seenTime</span></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  When the validation was first seen locally
+                </p>
+              </td>
+</tr>
+</tbody>
+</table></div>
+<h5>
+<a name="rippled.ref.ripple__isCurrent.h3"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__isCurrent.header"></a></span><a class="link" href="ripple__isCurrent.html#rippled.ref.ripple__isCurrent.header">Header</a>
+      </h5>
+<p>
+        <code class="computeroutput"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">ripple</span><span class="special">/</span><span class="identifier">consensus</span><span class="special">/</span><span class="identifier">Validations</span><span class="special">.</span><span class="identifier">h</span><span class="special">&gt;</span></code>
+      </p>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2012-2016 Ripple Labs Inc.<p>
+        Distributed under the ISC License
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="ripple__increaseLedgerTimeResolutionEvery.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="ripple__jss__JSS.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>
