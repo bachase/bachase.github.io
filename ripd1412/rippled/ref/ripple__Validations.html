@@ -6,12 +6,12 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="../../index.html" title="rippled">
 <link rel="up" href="../ref.html" title="Reference">
-<link rel="prev" href="ripple__ValidationParms/VALIDATION_SET_EXPIRES.html" title="ValidationParms::VALIDATION_SET_EXPIRES">
+<link rel="prev" href="ripple__ValidationParms/validationSET_EXPIRES.html" title="ValidationParms::validationSET_EXPIRES">
 <link rel="next" href="ripple__Validations/AddOutcome.html" title="Validations::AddOutcome">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <div class="spirit-nav">
-<a accesskey="p" href="ripple__ValidationParms/VALIDATION_SET_EXPIRES.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="ripple__Validations/AddOutcome.html"><img src="../../images/next.png" alt="Next"></a>
+<a accesskey="p" href="ripple__ValidationParms/validationSET_EXPIRES.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="ripple__Validations/AddOutcome.html"><img src="../../images/next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
@@ -25,8 +25,9 @@
         <span class="phrase"><a name="rippled.ref.ripple__Validations.synopsis"></a></span><a class="link" href="ripple__Validations.html#rippled.ref.ripple__Validations.synopsis">Synopsis</a>
       </h5>
 <pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span>
-    <span class="keyword">class</span> <span class="identifier">Derived</span><span class="special">,</span>
-    <span class="keyword">class</span> <span class="identifier">Validation</span><span class="special">&gt;</span>
+    <span class="keyword">class</span> <span class="identifier">StalePolicy</span><span class="special">,</span>
+    <span class="keyword">class</span> <span class="identifier">Validation</span><span class="special">,</span>
+    <span class="keyword">class</span> <span class="identifier">MutexType</span><span class="special">&gt;</span>
 <span class="keyword">class</span> <span class="identifier">Validations</span>
 </pre>
 <h5>
@@ -124,6 +125,18 @@
 <tr>
 <td>
                 <p>
+                  <a class="link" href="ripple__Validations/currentTrusted.html" title="Validations::currentTrusted"><span class="bold"><strong>currentTrusted</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Get the currently trusted validations.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
                   <a class="link" href="ripple__Validations/currentTrustedDistribution.html" title="Validations::currentTrustedDistribution"><span class="bold"><strong>currentTrustedDistribution</strong></span></a>
                 </p>
               </td>
@@ -148,6 +161,42 @@
 <tr>
 <td>
                 <p>
+                  <a class="link" href="ripple__Validations/fees.html" title="Validations::fees"><span class="bold"><strong>fees</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Returns fees reported by trusted validators in the given ledger.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__Validations/flush.html" title="Validations::flush"><span class="bold"><strong>flush</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Flush all current validations.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__Validations/getCurrentPublicKeys.html" title="Validations::getCurrentPublicKeys"><span class="bold"><strong>getCurrentPublicKeys</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Get the set of known public keys associated with current validations.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
                   <a class="link" href="ripple__Validations/getNodesAfter.html" title="Validations::getNodesAfter"><span class="bold"><strong>getNodesAfter</strong></span></a>
                 </p>
               </td>
@@ -161,73 +210,49 @@
 <tr>
 <td>
                 <p>
+                  <a class="link" href="ripple__Validations/getTrustedForLedger.html" title="Validations::getTrustedForLedger"><span class="bold"><strong>getTrustedForLedger</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Get set of trusted validations associated with a given ledger.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__Validations/getTrustedValidationTimes.html" title="Validations::getTrustedValidationTimes"><span class="bold"><strong>getTrustedValidationTimes</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Return the sign times of all validations associated with a given
+                  ledger.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__Validations/journal.html" title="Validations::journal"><span class="bold"><strong>journal</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Return the journal.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
                   <a class="link" href="ripple__Validations/numTrustedForLedger.html" title="Validations::numTrustedForLedger"><span class="bold"><strong>numTrustedForLedger</strong></span></a>
                 </p>
               </td>
 <td>
                 <p>
                   Count the number of trusted validations for the given ledger.
-                </p>
-              </td>
-</tr>
-</tbody>
-</table></div>
-<h5>
-<a name="rippled.ref.ripple__Validations.h3"></a>
-        <span class="phrase"><a name="rippled.ref.ripple__Validations.protected_member_functions"></a></span><a class="link" href="ripple__Validations.html#rippled.ref.ripple__Validations.protected_member_functions">Protected
-        Member Functions</a>
-      </h5>
-<div class="informaltable"><table class="table">
-<colgroup>
-<col>
-<col>
-</colgroup>
-<thead><tr>
-<th>
-                <p>
-                  Name
-                </p>
-              </th>
-<th>
-                <p>
-                  Description
-                </p>
-              </th>
-</tr></thead>
-<tbody>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="ripple__Validations/byLedger.html" title="Validations::byLedger"><span class="bold"><strong>byLedger</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  Return set of validations for a ledger.
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="ripple__Validations/current.html" title="Validations::current"><span class="bold"><strong>current</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  Iterate current validations.
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="ripple__Validations/flush.html" title="Validations::flush"><span class="bold"><strong>flush</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  Flush all current validations into the callback.
                 </p>
               </td>
 </tr>
@@ -246,7 +271,7 @@
 </tbody>
 </table></div>
 <h5>
-<a name="rippled.ref.ripple__Validations.h4"></a>
+<a name="rippled.ref.ripple__Validations.h3"></a>
         <span class="phrase"><a name="rippled.ref.ripple__Validations.description"></a></span><a class="link" href="ripple__Validations.html#rippled.ref.ripple__Validations.description">Description</a>
       </h5>
 <p>
@@ -260,8 +285,14 @@
         member functions or check the validation's trusted status.
       </p>
 <p>
-        This class uses CRTP to allow adapting for specific applications. Below is
-        a set of stubs illustrating the required type interface.
+        This class uses a policy design to allow adapting the handling of stale validations
+        in various circumstances. Below is a set of stubs illustrating the required
+        type interface.
+      </p>
+<p>
+        The MutexType is used to manage concurrent access to private members of
+        <a class="link" href="ripple__Validations.html" title="Validations"><code class="computeroutput"><span class="identifier">Validations</span></code></a>
+        but does not manage any data in the StalePolicy instance.
       </p>
 <pre class="programlisting"><span class="comment">// Identifier types that should be equality-comparable and copyable</span>
 <span class="keyword">struct</span> <span class="identifier">LedgerID</span><span class="special">;</span>
@@ -273,8 +304,8 @@
     <span class="comment">// Ledger ID associated with this validation</span>
     <span class="identifier">LedgerID</span> <span class="identifier">ledgerID</span><span class="special">()</span> <span class="keyword">const</span><span class="special">;</span>
 
-    <span class="comment">// Optional sequence number of validation's ledger</span>
-    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">optional</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span><span class="special">&gt;</span> <span class="identifier">seq</span><span class="special">()</span> <span class="keyword">const</span>
+    <span class="comment">// Sequence number of validation's ledger (0 means no sequence number)</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">uint32_t</span> <span class="identifier">seq</span><span class="special">()</span> <span class="keyword">const</span>
 
     <span class="comment">// When the validation was signed</span>
     <span class="identifier">NetClock</span><span class="special">::</span><span class="identifier">time_point</span> <span class="identifier">signTime</span><span class="special">()</span> <span class="keyword">const</span><span class="special">;</span>
@@ -285,36 +316,44 @@
     <span class="comment">// Signing key of node that published the validation</span>
     <span class="identifier">NodeKey</span> <span class="identifier">key</span><span class="special">()</span> <span class="keyword">const</span><span class="special">;</span>
 
-    <span class="comment">// Identifier of node that published the validaton</span>
+    <span class="comment">// Identifier of node that published the validation</span>
     <span class="identifier">NodeID</span> <span class="identifier">nodeID</span><span class="special">()</span> <span class="keyword">const</span><span class="special">;</span>
 
     <span class="comment">// Whether the publishing node was trusted at the time the validation</span>
     <span class="comment">// arrived</span>
     <span class="keyword">bool</span> <span class="identifier">trusted</span><span class="special">()</span> <span class="keyword">const</span><span class="special">;</span>
 
-    <span class="comment">// Set the previous validation ledger from this publishing node that this</span>
-    <span class="comment">// validation replaced</span>
+    <span class="comment">// Set the previous validation ledger from this publishing node that</span>
+    <span class="comment">// this validation replaced</span>
     <span class="keyword">void</span> <span class="identifier">setPreviousLedgerID</span><span class="special">(</span><span class="identifier">LedgerID</span> <span class="special">&amp;);</span>
 
     <span class="comment">// Check if this validation had the given ledger ID as its prior ledger</span>
     <span class="keyword">bool</span> <span class="identifier">isPreviousLedgerID</span><span class="special">(</span><span class="identifier">LedgerID</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
 
+    <span class="identifier">implementation_specific_t</span>
+    <span class="identifier">unwrap</span><span class="special">()</span> <span class="special">-&gt;</span> <span class="keyword">return</span> <span class="identifier">the</span> <span class="identifier">implementation</span><span class="special">-</span><span class="identifier">sepcific</span> <span class="identifier">type</span> <span class="identifier">being</span> <span class="identifier">wrapped</span>
+
     <span class="comment">// ... implementation specific</span>
 <span class="special">};</span>
 
-<span class="keyword">class</span> <span class="identifier">Derived</span> <span class="special">:</span> <span class="keyword">public</span> <span class="identifier">Validations</span><span class="special">&lt;</span><span class="identifier">Derived</span><span class="special">,</span> <span class="identifier">Validation</span><span class="special">&gt;</span>
+<span class="keyword">class</span> <span class="identifier">StalePolicy</span>
 <span class="special">{</span>
-    <span class="identifier">Derived</span><span class="special">(</span><span class="identifier">ValidationParms</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">p</span><span class="special">,</span> <span class="identifier">clock_type</span> <span class="special">&amp;</span> <span class="identifier">c</span><span class="special">,</span> <span class="special">...)</span>
-        <span class="special">:</span> <span class="identifier">Validations</span><span class="special">(</span><span class="identifier">p</span><span class="special">,</span> <span class="identifier">c</span><span class="special">),</span> <span class="special">...</span>
+    <span class="comment">// Handle a newly stale validation, this should do minimal work since</span>
+    <span class="comment">// it is called by Validations while it may be iterating Validations</span>
+    <span class="comment">// under lock</span>
+    <span class="keyword">void</span> <span class="identifier">onStale</span><span class="special">(</span><span class="identifier">Validation</span> <span class="special">&amp;&amp;</span> <span class="special">);</span>
 
-    <span class="comment">// Handle a newly stale validation</span>
-    <span class="keyword">void</span> <span class="identifier">onStale</span><span class="special">(</span><span class="identifier">Validations</span> <span class="special">&amp;&amp;</span> <span class="special">);</span>
+    <span class="comment">// Flush the remaining validations (typically done on shutdown)</span>
+    <span class="keyword">void</span> <span class="identifier">flush</span><span class="special">(</span><span class="identifier">hash_map</span><span class="special">&lt;</span><span class="identifier">NodeKey</span><span class="special">,</span><span class="identifier">Validation</span><span class="special">&gt;</span> <span class="special">&amp;&amp;</span> <span class="identifier">remaining</span><span class="special">);</span>
+
+    <span class="comment">// Return the current network time (used to determine staleness)</span>
+    <span class="identifier">NetClock</span><span class="special">::</span><span class="identifier">time_point</span> <span class="identifier">now</span><span class="special">()</span> <span class="keyword">const</span><span class="special">;</span>
 
     <span class="comment">// ... implementation specific</span>
 <span class="special">};</span>
 </pre>
 <h5>
-<a name="rippled.ref.ripple__Validations.h5"></a>
+<a name="rippled.ref.ripple__Validations.h4"></a>
         <span class="phrase"><a name="rippled.ref.ripple__Validations.template_parameters"></a></span><a class="link" href="ripple__Validations.html#rippled.ref.ripple__Validations.template_parameters">Template
         Parameters</a>
       </h5>
@@ -339,12 +378,12 @@
 <tr>
 <td>
                 <p>
-                  <code class="computeroutput"><span class="identifier">Derived</span></code>
+                  <code class="computeroutput"><span class="identifier">StalePolicy</span></code>
                 </p>
               </td>
 <td>
                 <p>
-                  Provides functions conforming to the CRTP interface
+                  Determines how to determine and handle stale validations
                 </p>
               </td>
 </tr>
@@ -360,10 +399,22 @@
                 </p>
               </td>
 </tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><span class="identifier">MutexType</span></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Mutex used to manage concurrent access
+                </p>
+              </td>
+</tr>
 </tbody>
 </table></div>
 <h5>
-<a name="rippled.ref.ripple__Validations.h6"></a>
+<a name="rippled.ref.ripple__Validations.h5"></a>
         <span class="phrase"><a name="rippled.ref.ripple__Validations.header"></a></span><a class="link" href="ripple__Validations.html#rippled.ref.ripple__Validations.header">Header</a>
       </h5>
 <p>
@@ -379,7 +430,7 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="ripple__ValidationParms/VALIDATION_SET_EXPIRES.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="ripple__Validations/AddOutcome.html"><img src="../../images/next.png" alt="Next"></a>
+<a accesskey="p" href="ripple__ValidationParms/validationSET_EXPIRES.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="ripple__Validations/AddOutcome.html"><img src="../../images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

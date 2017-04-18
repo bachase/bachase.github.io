@@ -18,16 +18,20 @@
 <a name="rippled.ref.ripple__Validations.Validations"></a><a class="link" href="Validations.html" title="Validations::Validations">Validations::Validations</a>
 </h4></div></div></div>
 <p>
-          <a class="indexterm" name="idp6511294064"></a>
+          <a class="indexterm" name="idp6511078624"></a>
 Constructor.
         </p>
 <h6>
 <a name="rippled.ref.ripple__Validations.Validations.h0"></a>
           <span class="phrase"><a name="rippled.ref.ripple__Validations.Validations.synopsis"></a></span><a class="link" href="Validations.html#rippled.ref.ripple__Validations.Validations.synopsis">Synopsis</a>
         </h6>
-<pre class="programlisting"><span class="identifier">Validations</span><span class="special">(</span>
+<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span>
+    <span class="keyword">class</span><span class="special">...</span> <span class="identifier">Ts</span><span class="special">&gt;</span>
+<span class="identifier">Validations</span><span class="special">(</span>
     <span class="identifier">ValidationParms</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">p</span><span class="special">,</span>
-    <span class="identifier">beast</span><span class="special">::</span><span class="identifier">abstract_clock</span><span class="special">&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">chrono</span><span class="special">::</span><span class="identifier">steady_clock</span> <span class="special">&gt;&amp;</span> <span class="identifier">c</span><span class="special">);</span>
+    <span class="identifier">beast</span><span class="special">::</span><span class="identifier">abstract_clock</span><span class="special">&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">chrono</span><span class="special">::</span><span class="identifier">steady_clock</span> <span class="special">&gt;&amp;</span> <span class="identifier">c</span><span class="special">,</span>
+    <span class="identifier">beast</span><span class="special">::</span><span class="identifier">Journal</span> <span class="identifier">j</span><span class="special">,</span>
+    <span class="identifier">Ts</span><span class="special">&amp;&amp;...</span> <span class="identifier">ts</span><span class="special">);</span>
 </pre>
 <h6>
 <a name="rippled.ref.ripple__Validations.Validations.h1"></a>
@@ -77,6 +81,30 @@ Constructor.
 <td>
                   <p>
                     Clock to use for expiring validations stored by ledger
+                  </p>
+                </td>
+</tr>
+<tr>
+<td>
+                  <p>
+                    <code class="computeroutput"><span class="identifier">j</span></code>
+                  </p>
+                </td>
+<td>
+                  <p>
+                    Journal used for logging
+                  </p>
+                </td>
+</tr>
+<tr>
+<td>
+                  <p>
+                    <code class="computeroutput"><span class="identifier">ts</span></code>
+                  </p>
+                </td>
+<td>
+                  <p>
+                    Parameters for constructing StalePolicy instance
                   </p>
                 </td>
 </tr>

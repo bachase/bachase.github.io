@@ -18,24 +18,25 @@
 <a name="rippled.ref.ripple__Validations.byLedger"></a><a class="link" href="byLedger.html" title="Validations::byLedger">Validations::byLedger</a>
 </h4></div></div></div>
 <p>
-          <a class="indexterm" name="idp6511373328"></a>
-Return set of validations for a ledger.
+          <a class="indexterm" name="idp6511167280"></a>
+Iterate the set of validations associated with a given
+          ledger id.
         </p>
 <h6>
 <a name="rippled.ref.ripple__Validations.byLedger.h0"></a>
           <span class="phrase"><a name="rippled.ref.ripple__Validations.byLedger.synopsis"></a></span><a class="link" href="byLedger.html#rippled.ref.ripple__Validations.byLedger.synopsis">Synopsis</a>
         </h6>
-<pre class="programlisting"><span class="identifier">ValidationMap</span> <span class="keyword">const</span> <span class="special">*</span>
+<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span>
+    <span class="keyword">class</span> <span class="identifier">F</span><span class="special">&gt;</span>
+<span class="keyword">void</span>
 <span class="identifier">byLedger</span><span class="special">(</span>
-    <span class="identifier">LedgerID</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">ledgerID</span><span class="special">);</span>
+    <span class="identifier">LedgerID</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">ledgerID</span><span class="special">,</span>
+    <span class="identifier">F</span><span class="special">&amp;&amp;</span> <span class="identifier">f</span><span class="special">);</span>
 </pre>
 <h6>
 <a name="rippled.ref.ripple__Validations.byLedger.h1"></a>
           <span class="phrase"><a name="rippled.ref.ripple__Validations.byLedger.description"></a></span><a class="link" href="byLedger.html#rippled.ref.ripple__Validations.byLedger.description">Description</a>
         </h6>
-<p>
-          Returns the set of validations for a ledger.
-        </p>
 <h6>
 <a name="rippled.ref.ripple__Validations.byLedger.h2"></a>
           <span class="phrase"><a name="rippled.ref.ripple__Validations.byLedger.parameters"></a></span><a class="link" href="byLedger.html#rippled.ref.ripple__Validations.byLedger.parameters">Parameters</a>
@@ -57,7 +58,8 @@ Return set of validations for a ledger.
                   </p>
                 </th>
 </tr></thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td>
                   <p>
                     <code class="computeroutput"><span class="identifier">ledgerID</span></code>
@@ -68,15 +70,25 @@ Return set of validations for a ledger.
                     The identifier of the ledger
                   </p>
                 </td>
-</tr></tbody>
+</tr>
+<tr>
+<td>
+                  <p>
+                    <code class="computeroutput"><span class="identifier">f</span></code>
+                  </p>
+                </td>
+<td>
+                  <p>
+                    Callable with signature (NodeKey const &amp;, Validation const
+                    &amp;)
+                  </p>
+                </td>
+</tr>
+</tbody>
 </table></div>
-<h6>
-<a name="rippled.ref.ripple__Validations.byLedger.h3"></a>
-          <span class="phrase"><a name="rippled.ref.ripple__Validations.byLedger.return_value"></a></span><a class="link" href="byLedger.html#rippled.ref.ripple__Validations.byLedger.return_value">Return
-          Value</a>
-        </h6>
 <p>
-          A pointer to the set of validations, nullptr if none exist.
+          The callable f is expected to be a simple transformation of its arguments
+          and will be called with mutex_ under lock.
         </p>
 </div>
 <table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>

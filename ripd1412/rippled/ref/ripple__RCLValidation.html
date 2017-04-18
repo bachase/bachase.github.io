@@ -24,7 +24,7 @@
 <a name="rippled.ref.ripple__RCLValidation.h0"></a>
         <span class="phrase"><a name="rippled.ref.ripple__RCLValidation.synopsis"></a></span><a class="link" href="ripple__RCLValidation.html#rippled.ref.ripple__RCLValidation.synopsis">Synopsis</a>
       </h5>
-<pre class="programlisting"><span class="keyword">struct</span> <span class="identifier">RCLValidation</span>
+<pre class="programlisting"><span class="keyword">class</span> <span class="identifier">RCLValidation</span>
 </pre>
 <h5>
 <a name="rippled.ref.ripple__RCLValidation.h1"></a>
@@ -68,6 +68,9 @@
                 </p>
               </td>
 <td>
+                <p>
+                  Check whether the given hash matches this validaiton's prior hash.
+                </p>
               </td>
 </tr>
 <tr>
@@ -77,6 +80,9 @@
                 </p>
               </td>
 <td>
+                <p>
+                  Public key of validator that published the validation.
+                </p>
               </td>
 </tr>
 <tr>
@@ -86,6 +92,21 @@
                 </p>
               </td>
 <td>
+                <p>
+                  Validated ledger's hash.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__RCLValidation/loadFee.html" title="RCLValidation::loadFee"><span class="bold"><strong>loadFee</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Get the load fee of the validation of it exists.
+                </p>
               </td>
 </tr>
 <tr>
@@ -95,6 +116,9 @@
                 </p>
               </td>
 <td>
+                <p>
+                  NodeID of validator that published the validation.
+                </p>
               </td>
 </tr>
 <tr>
@@ -104,6 +128,9 @@
                 </p>
               </td>
 <td>
+                <p>
+                  Validated ledger's first seen time.
+                </p>
               </td>
 </tr>
 <tr>
@@ -113,6 +140,9 @@
                 </p>
               </td>
 <td>
+                <p>
+                  Validated ledger's sequence number (0 if none)
+                </p>
               </td>
 </tr>
 <tr>
@@ -122,6 +152,9 @@
                 </p>
               </td>
 <td>
+                <p>
+                  Set the prior ledger hash this validation is replacing.
+                </p>
               </td>
 </tr>
 <tr>
@@ -131,6 +164,9 @@
                 </p>
               </td>
 <td>
+                <p>
+                  Validation ledger's signing time.
+                </p>
               </td>
 </tr>
 <tr>
@@ -140,52 +176,35 @@
                 </p>
               </td>
 <td>
+                <p>
+                  Whether the validation is considered trusted.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__RCLValidation/unwrap.html" title="RCLValidation::unwrap"><span class="bold"><strong>unwrap</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Extract the underlying STValidation being wrapepd.
+                </p>
               </td>
 </tr>
 </tbody>
 </table></div>
 <h5>
 <a name="rippled.ref.ripple__RCLValidation.h2"></a>
-        <span class="phrase"><a name="rippled.ref.ripple__RCLValidation.data_members"></a></span><a class="link" href="ripple__RCLValidation.html#rippled.ref.ripple__RCLValidation.data_members">Data
-        Members</a>
-      </h5>
-<div class="informaltable"><table class="table">
-<colgroup>
-<col>
-<col>
-</colgroup>
-<thead><tr>
-<th>
-                <p>
-                  Name
-                </p>
-              </th>
-<th>
-                <p>
-                  Description
-                </p>
-              </th>
-</tr></thead>
-<tbody><tr>
-<td>
-                <p>
-                  <a class="link" href="ripple__RCLValidation/val_.html" title="RCLValidation::val_"><span class="bold"><strong>val_</strong></span></a>
-                </p>
-              </td>
-<td>
-              </td>
-</tr></tbody>
-</table></div>
-<h5>
-<a name="rippled.ref.ripple__RCLValidation.h3"></a>
         <span class="phrase"><a name="rippled.ref.ripple__RCLValidation.description"></a></span><a class="link" href="ripple__RCLValidation.html#rippled.ref.ripple__RCLValidation.description">Description</a>
       </h5>
 <p>
-        Wraps an STValidation::pointer for compatiblity with the generic validation
+        Wraps an STValidation::pointer for compatibility with the generic validation
         code.
       </p>
 <h5>
-<a name="rippled.ref.ripple__RCLValidation.h4"></a>
+<a name="rippled.ref.ripple__RCLValidation.h3"></a>
         <span class="phrase"><a name="rippled.ref.ripple__RCLValidation.header"></a></span><a class="link" href="ripple__RCLValidation.html#rippled.ref.ripple__RCLValidation.header">Header</a>
       </h5>
 <p>

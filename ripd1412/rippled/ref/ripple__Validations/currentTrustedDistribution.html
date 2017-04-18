@@ -6,19 +6,19 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="../../../index.html" title="rippled">
 <link rel="up" href="../ripple__Validations.html" title="Validations">
-<link rel="prev" href="current.html" title="Validations::current">
+<link rel="prev" href="currentTrusted.html" title="Validations::currentTrusted">
 <link rel="next" href="current_.html" title="Validations::current_">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <div class="spirit-nav">
-<a accesskey="p" href="current.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ripple__Validations.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="current_.html"><img src="../../../images/next.png" alt="Next"></a>
+<a accesskey="p" href="currentTrusted.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ripple__Validations.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="current_.html"><img src="../../../images/next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="rippled.ref.ripple__Validations.currentTrustedDistribution"></a><a class="link" href="currentTrustedDistribution.html" title="Validations::currentTrustedDistribution">Validations::currentTrustedDistribution</a>
 </h4></div></div></div>
 <p>
-          <a class="indexterm" name="idp6511466624"></a>
+          <a class="indexterm" name="idp6511279824"></a>
 Distribution of current trusted validations.
         </p>
 <h6>
@@ -27,11 +27,9 @@ Distribution of current trusted validations.
         </h6>
 <pre class="programlisting"><span class="identifier">hash_map</span><span class="special">&lt;</span> <span class="identifier">LedgerID</span><span class="special">,</span> <span class="identifier">ValidationCounts</span> <span class="special">&gt;</span>
 <span class="identifier">currentTrustedDistribution</span><span class="special">(</span>
-    <span class="identifier">NetClock</span><span class="special">::</span><span class="identifier">time_point</span> <span class="identifier">t</span><span class="special">,</span>
     <span class="identifier">LedgerID</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">currentLedger</span><span class="special">,</span>
     <span class="identifier">LedgerID</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">priorLedger</span><span class="special">,</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">cutoffBefore</span><span class="special">,</span>
-    <span class="identifier">beast</span><span class="special">::</span><span class="identifier">Journal</span><span class="special">&amp;</span> <span class="identifier">j</span><span class="special">);</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">uint32_t</span> <span class="identifier">cutoffBefore</span><span class="special">);</span>
 </pre>
 <h6>
 <a name="rippled.ref.ripple__Validations.currentTrustedDistribution.h1"></a>
@@ -63,18 +61,6 @@ Distribution of current trusted validations.
                 </th>
 </tr></thead>
 <tbody>
-<tr>
-<td>
-                  <p>
-                    <code class="computeroutput"><span class="identifier">t</span></code>
-                  </p>
-                </td>
-<td>
-                  <p>
-                    Current time used to determine ledger staleness
-                  </p>
-                </td>
-</tr>
 <tr>
 <td>
                   <p>
@@ -111,18 +97,6 @@ Distribution of current trusted validations.
                   </p>
                 </td>
 </tr>
-<tr>
-<td>
-                  <p>
-                    <code class="computeroutput"><span class="identifier">j</span></code>
-                  </p>
-                </td>
-<td>
-                  <p>
-                    Journal for logging
-                  </p>
-                </td>
-</tr>
 </tbody>
 </table></div>
 </div>
@@ -135,7 +109,7 @@ Distribution of current trusted validations.
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="current.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ripple__Validations.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="current_.html"><img src="../../../images/next.png" alt="Next"></a>
+<a accesskey="p" href="currentTrusted.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ripple__Validations.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="current_.html"><img src="../../../images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>
