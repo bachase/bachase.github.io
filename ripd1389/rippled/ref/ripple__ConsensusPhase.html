@@ -1,0 +1,134 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>ConsensusPhase</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="rippled">
+<link rel="up" href="../ref.html" title="Reference">
+<link rel="prev" href="ripple__ConsensusMode.html" title="ConsensusMode">
+<link rel="next" href="ripple__ConsensusProposal.html" title="ConsensusProposal">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="ripple__ConsensusMode.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="ripple__ConsensusProposal.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="rippled.ref.ripple__ConsensusPhase"></a><a class="link" href="ripple__ConsensusPhase.html" title="ConsensusPhase">ConsensusPhase</a>
+</h3></div></div></div>
+<p>
+        <a class="indexterm" name="idp6502429456"></a>
+Phases of consensus for a single ledger round.
+      </p>
+<h5>
+<a name="rippled.ref.ripple__ConsensusPhase.h0"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__ConsensusPhase.synopsis"></a></span><a class="link" href="ripple__ConsensusPhase.html#rippled.ref.ripple__ConsensusPhase.synopsis">Synopsis</a>
+      </h5>
+<pre class="programlisting"><span class="keyword">enum</span> <span class="identifier">ConsensusPhase</span>
+</pre>
+<p>
+        <a class="indexterm" name="idp6502435424"></a>
+ <a class="indexterm" name="idp6502436528"></a>
+ <a class="indexterm" name="idp6502437632"></a>
+
+      </p>
+<h5>
+<a name="rippled.ref.ripple__ConsensusPhase.h1"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__ConsensusPhase.values"></a></span><a class="link" href="ripple__ConsensusPhase.html#rippled.ref.ripple__ConsensusPhase.values">Values</a>
+      </h5>
+<div class="informaltable"><table class="table">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
+                <p>
+                  Name
+                </p>
+              </th>
+<th>
+                <p>
+                  Description
+                </p>
+              </th>
+</tr></thead>
+<tbody>
+<tr>
+<td>
+                <p>
+                  open
+                </p>
+              </td>
+<td>
+                <p>
+                  We haven't closed our ledger yet, but others might have.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  establish
+                </p>
+              </td>
+<td>
+                <p>
+                  Establishing consensus by exchanging proposals with our peers.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  accepted
+                </p>
+              </td>
+<td>
+                <p>
+                  We have accepted a new last closed ledger and are waiting on a
+                  call to startRound to begin the next consensus round.
+                </p>
+              </td>
+</tr>
+</tbody>
+</table></div>
+<h5>
+<a name="rippled.ref.ripple__ConsensusPhase.h2"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__ConsensusPhase.description"></a></span><a class="link" href="ripple__ConsensusPhase.html#rippled.ref.ripple__ConsensusPhase.description">Description</a>
+      </h5>
+<pre class="programlisting">     <span class="string">"close"</span>             <span class="string">"accept"</span>
+<span class="identifier">open</span> <span class="special">-------</span> <span class="special">&gt;</span> <span class="identifier">establish</span> <span class="special">---------&gt;</span> <span class="identifier">accepted</span>
+  <span class="special">^</span>               <span class="special">|</span>                    <span class="special">|</span>
+  <span class="special">|---------------|</span>                    <span class="special">|</span>
+  <span class="special">^</span>                     <span class="string">"startRound"</span>   <span class="special">|</span>
+  <span class="special">|------------------------------------|</span>
+</pre>
+<p>
+        The typical transition goes from open to establish to accepted and then a
+        call to startRound begins the process anew. However, if a wrong prior ledger
+        is detected and recovered during the establish or accept phase, consensus
+        will internally go back to open (see <a class="link" href="ripple__Consensus/handleWrongLedger.html" title="Consensus::handleWrongLedger"><code class="computeroutput"><span class="identifier">Consensus</span><span class="special">::</span><span class="identifier">handleWrongLedger</span></code></a>).
+      </p>
+<h5>
+<a name="rippled.ref.ripple__ConsensusPhase.h3"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__ConsensusPhase.header"></a></span><a class="link" href="ripple__ConsensusPhase.html#rippled.ref.ripple__ConsensusPhase.header">Header</a>
+      </h5>
+<p>
+        <code class="computeroutput"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">ripple</span><span class="special">/</span><span class="identifier">consensus</span><span class="special">/</span><span class="identifier">ConsensusTypes</span><span class="special">.</span><span class="identifier">h</span><span class="special">&gt;</span></code>
+      </p>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2012-2017 Ripple Labs Inc.<p>
+        Distributed under the ISC License
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="ripple__ConsensusMode.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="ripple__ConsensusProposal.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

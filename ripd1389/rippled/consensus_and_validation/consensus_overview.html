@@ -1,0 +1,499 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Consensus Overview</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="rippled">
+<link rel="up" href="../consensus_and_validation.html" title="Consensus and Validation">
+<link rel="prev" href="../consensus_and_validation.html" title="Consensus and Validation">
+<link rel="next" href="consensus_type_requirements.html" title="Consensus Type Requirements">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="../consensus_and_validation.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../consensus_and_validation.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="consensus_type_requirements.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="rippled.consensus_and_validation.consensus_overview"></a><a class="link" href="consensus_overview.html" title="Consensus Overview">Consensus
+      Overview</a>
+</h3></div></div></div>
+<h5>
+<a name="rippled.consensus_and_validation.consensus_overview.h0"></a>
+        <span class="phrase"><a name="rippled.consensus_and_validation.consensus_overview.definitions"></a></span><a class="link" href="consensus_overview.html#rippled.consensus_and_validation.consensus_overview.definitions">Definitions</a>
+      </h5>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            The <span class="emphasis"><em>ledger</em></span> is the shared distributed state. Each
+            ledger has a unique ID to distinguish it from all other ledgers. During
+            consensus, the <span class="emphasis"><em>previous</em></span>, <span class="emphasis"><em>prior</em></span>
+            or <span class="emphasis"><em>last-closed</em></span> ledger is the most recent ledger
+            seen by consensus and is the basis upon which it will build the next
+            ledger.
+          </li>
+<li class="listitem">
+            A <span class="emphasis"><em>transaction</em></span> is an instruction for an atomic change
+            in the ledger state. A unique ID distinguishes a transaction from other
+            transactions.
+          </li>
+<li class="listitem">
+            A <span class="emphasis"><em>transaction set</em></span> is a set of transactions under
+            consideration by consensus. The goal of consensus is to reach agreement
+            on this set. The generic consensus algorithm does not rely on an ordering
+            of transactions within the set, nor does it specify how to apply a transaction
+            set to a ledger to generate a new ledger. A unique ID distinguishes a
+            set of transactions from all other sets of transactions.
+          </li>
+<li class="listitem">
+            A <span class="emphasis"><em>node</em></span> is one of the distributed actors running
+            the consensus algorithm. It has a unique ID to distinguish it from all
+            other nodes.
+          </li>
+<li class="listitem">
+            A <span class="emphasis"><em>peer</em></span> of a node is another node that it has chosen
+            to follow and which it believes will not collude with other chosen peers.
+            The choice of peers is not symmetric, since participants can decide on
+            their chosen sets independently.
+          </li>
+<li class="listitem">
+            A <span class="emphasis"><em>position</em></span> is the current belief of the next ledger's
+            transaction set and close time. Position can refer to the node's own
+            position or the position of a peer.
+          </li>
+<li class="listitem">
+            A <span class="emphasis"><em>proposal</em></span> is one of a sequence of positions a node
+            shares during consensus. An initial proposal contains the starting position
+            taken by a node before it considers any peer positions. If a node subsequently
+            updates its position in response to its peers, it will issue an updated
+            proposal. A proposal is uniquely identified by the ID of the proposing
+            node, the ID of the position taken, the ID of the prior ledger the proposal
+            is for, and the sequence number of the proposal.
+          </li>
+<li class="listitem">
+            A <span class="emphasis"><em>dispute</em></span> is a transaction that is either not part
+            of a node's position or not in a peer's position. During consensus, the
+            node will add or remove disputed transactions from its position based
+            on that transaction's support amongst its peers.
+          </li>
+</ul></div>
+<p>
+        Note that most types have an ID as a lightweight identifier of instances
+        of that type. Consensus often operates on the IDs directly since the underlying
+        type is potentially expensive to share over the network. For example, proposal's
+        only contain the ID of the position of a peer. Since many peers likely have
+        the same position, this reduces the need to send the full transaction set
+        multiple times. Instead, a node can request the transaction set from the
+        network if necessary.
+      </p>
+<h5>
+<a name="rippled.consensus_and_validation.consensus_overview.h1"></a>
+        <span class="phrase"><a name="rippled.consensus_and_validation.consensus_overview.overview"></a></span><a class="link" href="consensus_overview.html#rippled.consensus_and_validation.consensus_overview.overview">Overview
+        </a>
+      </h5>
+<p>
+        <span class="inlinemediaobject"><img src="../../images/consensus/consensus_overview.png" width="50%"></span>
+      </p>
+<p>
+        The diagram above is an overview of the consensus process from the perspective
+        of a single participant. Recall that during a single consensus round, a node
+        is trying to agree with its peers on which transactions to apply to its prior
+        ledger when generating the next ledger. It also attempts to agree on the
+        <a class="link" href="consensus_overview.html#effective_close_time">network time when the ledger closed</a>.
+        There are 3 main phases to a consensus round:
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            A call to <code class="literal">startRound</code> places the node in the <code class="literal">Open</code>
+            phase. In this phase, the node is waiting for transactions to include
+            in its open ledger.
+          </li>
+<li class="listitem">
+            At some point, the node will <code class="literal">Close</code> the open ledger
+            and transition to the <code class="literal">Establish</code> phase. In this phase,
+            the node shares/receives peer proposals on which transactions should
+            be accepted in the closed ledger.
+          </li>
+<li class="listitem">
+            At some point, the node determines it has reached consensus with its
+            peers on which transactions to include. It transitions to the <code class="literal">Accept</code>
+            phase. In this phase, the node works on applying the transactions to
+            the prior ledger to generate a new closed ledger. Once the new ledger
+            is completed, the node shares the validated ledger hash with the network
+            and makes a call to <code class="literal">startRound</code> to start the cycle
+            again for the next ledger.
+          </li>
+</ul></div>
+<p>
+        Throughout, a heartbeat timer calls <code class="literal">timerEntry</code> at a regular
+        frequency to drive the process forward. Although the <code class="literal">startRound</code>
+        call occurs at arbitrary times based on when the initial round began and
+        the time it takes to apply transactions, the transitions from <code class="literal">Open</code>
+        to <code class="literal">Establish</code> and <code class="literal">Establish</code> to <code class="literal">Accept</code>
+        only occur during calls to <code class="literal">timerEntry</code>. Similarly, transactions
+        can arrive at arbitrary times, independent of the heartbeat timer. Transactions
+        received after the <code class="literal">Open</code> to <code class="literal">Close</code> transition
+        and not part of peer proposals won't be considered until the next consensus
+        round. They are represented above by the light green triangles.
+      </p>
+<p>
+        Peer proposals are issued by a node during a <code class="literal">timerEntry</code>
+        call, but since peers do not synchronize <code class="literal">timerEntry</code> calls,
+        they are received by other peers at arbitrary times. Peer proposals are only
+        considered if received prior to the <code class="literal">Establish</code> to <code class="literal">Accept</code>
+        transition, and only if the peer is working on the same prior ledger. Peer
+        proposals received after consensus is reached will not be meaningful and
+        are represented above by the circle with the X in it. Only proposals from
+        chosen peers are considered.
+      </p>
+<a name="effective_close_time"></a><h5>
+<a name="rippled.consensus_and_validation.consensus_overview.h2"></a>
+        <span class="phrase"><a name="rippled.consensus_and_validation.consensus_overview.effective_close_time"></a></span><a class="link" href="consensus_overview.html#rippled.consensus_and_validation.consensus_overview.effective_close_time">Effective
+        Close Time</a>
+      </h5>
+<p>
+        In addition to agreeing on a transaction set, each consensus round tries
+        to agree on the time the ledger closed. Each node calculates its own close
+        time when it closes the open ledger. This exact close time is rounded to
+        the nearest multiple of the current <span class="emphasis"><em>effective close time resolution</em></span>.
+        It is this <span class="emphasis"><em>effective close time</em></span> that nodes seek to agree
+        on. This allows servers to derive a common time for a ledger without the
+        need for perfectly synchronized clocks. As depicted below, the 3 pink arrows
+        represent exact close times from 3 consensus nodes that round to the same
+        effective close time given the current resolution. The purple arrow represents
+        a peer whose estimate rounds to a different effective close time given the
+        current resolution.
+      </p>
+<p>
+        <span class="inlinemediaobject"><img src="../../images/consensus/EffCloseTime.png"></span>
+      </p>
+<p>
+        The effective close time is part of the node's position and is shared with
+        peers in its proposals. Just like the position on the consensus transaction
+        set, a node will update its close time position in response to its peers'
+        effective close time positions. Peers can agree to disagree on the close
+        time, in which case the effective close time is taken as 1 second past the
+        prior close.
+      </p>
+<p>
+        The close time resolution is itself dynamic, decreasing (coarser) resolution
+        in subsequent consensus rounds if nodes are unable to reach consensus on
+        an effective close time and increasing (finer) resolution if nodes consistently
+        reach close time consensus.
+      </p>
+<h5>
+<a name="rippled.consensus_and_validation.consensus_overview.h3"></a>
+        <span class="phrase"><a name="rippled.consensus_and_validation.consensus_overview.modes"></a></span><a class="link" href="consensus_overview.html#rippled.consensus_and_validation.consensus_overview.modes">Modes</a>
+      </h5>
+<p>
+        Internally, a node operates under one of the following consensus modes. Either
+        of the first two modes may be chosen when a consensus round starts.
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            <span class="emphasis"><em>Proposing</em></span> indicates the node is a full-fledged consensus
+            participant. It takes on positions and sends proposals to its peers.
+          </li>
+<li class="listitem">
+            <span class="emphasis"><em>Observing</em></span> indicates the node is a passive consensus
+            participant. It maintains a position internally, but does not propose
+            that position to its peers. Instead, it receives peer proposals and updates
+            its position to track the majority of its peers. This may be preferred
+            if the node is only being used to track the state of the network or during
+            a start-up phase while it is still synchronizing with the network.
+          </li>
+</ul></div>
+<p>
+        The other two modes are set internally during the consensus round when the
+        node believes it is no longer working on the dominant ledger chain based
+        on peer validations. It checks this on every call to <code class="literal">timerEntry</code>.
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            <span class="emphasis"><em>Wrong Ledger</em></span> indicates the node is not working on
+            the correct prior ledger and does not have it available. It requests
+            that ledger from the network, but continues to work towards consensus
+            this round while waiting. If it had been <span class="emphasis"><em>proposing</em></span>,
+            it will send a special "bowout" proposal to its peers to indicate
+            its change in mode for the rest of this round. For the duration of the
+            round, it defers to peer positions for determining the consensus outcome
+            as if it were just <span class="emphasis"><em>observing</em></span>.
+          </li>
+<li class="listitem">
+            <span class="emphasis"><em>Switch Ledger</em></span> indicates that the node has acquired
+            the correct prior ledger from the network. Although it now has the correct
+            prior ledger, the fact that it had the wrong one at some point during
+            this round means it is likely behind and should defer to peer positions
+            for determining the consensus outcome.
+          </li>
+</ul></div>
+<p>
+        <span class="inlinemediaobject"><img src="../../images/consensus/consensus_modes.png"></span>
+      </p>
+<p>
+        Once either wrong ledger or switch ledger are reached, the node cannot return
+        to proposing or observing until the next consensus round. However, the node
+        could change its view of the correct prior ledger, so going from switch ledger
+        to wrong ledger and back again is possible.
+      </p>
+<p>
+        The distinction between the wrong and switched ledger modes arises because
+        a ledger's unique identifier may be known by a node before the ledger itself.
+        This reflects that fact that the data corresponding to a ledger may be large
+        and take time to share over the network, whereas the smaller ID could be
+        shared in a peer validation much more quickly. Distinguishing the two states
+        allows the node to decide how best to generate the next ledger once it declares
+        consensus.
+      </p>
+<h5>
+<a name="rippled.consensus_and_validation.consensus_overview.h4"></a>
+        <span class="phrase"><a name="rippled.consensus_and_validation.consensus_overview.phases"></a></span><a class="link" href="consensus_overview.html#rippled.consensus_and_validation.consensus_overview.phases">Phases</a>
+      </h5>
+<p>
+        As depicted in the overview diagram, consensus is best viewed as a progression
+        through 3 phases. There are 4 public methods of the generic consensus algorithm
+        that determine this progression
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            <code class="literal">startRound</code> begins a consensus round.
+          </li>
+<li class="listitem">
+            <code class="literal">timerEntry</code> is called at a regular frequency (<code class="literal">LEDGER_MIN_CLOSE</code>)
+            and is the only call to consensus that can change the phase from <code class="literal">Open</code>
+            to <code class="literal">Establish</code> or <code class="literal">Accept</code>.
+          </li>
+<li class="listitem">
+            <code class="literal">peerProposal</code> is called whenever a peer proposal is
+            received and is what allows a node to update its position in a subsequent
+            <code class="literal">timerEntry</code> call.
+          </li>
+<li class="listitem">
+            <code class="literal">gotTxSet</code> is called when a transaction set is received
+            from the network. This is typically in response to a prior request from
+            the node to acquire the transaction set corresponding to a disagreeing
+            peer's position.
+          </li>
+</ul></div>
+<p>
+        The following subsections describe each consensus phase in more detail and
+        what actions are taken in response to these calls.
+      </p>
+<h4>
+<a name="rippled.consensus_and_validation.consensus_overview.h5"></a>
+        <span class="phrase"><a name="rippled.consensus_and_validation.consensus_overview.open"></a></span><a class="link" href="consensus_overview.html#rippled.consensus_and_validation.consensus_overview.open">Open</a>
+      </h4>
+<p>
+        The <code class="literal">Open</code> phase is a quiescent period to allow transactions
+        to build up in the node's open ledger. The duration is a trade-off between
+        latency and throughput. A shorter window reduces the latency to generating
+        the next ledger, but also reduces transaction throughput due to fewer transactions
+        accepted into the ledger.
+      </p>
+<p>
+        A call to <code class="literal">startRound</code> would forcibly begin the next consensus
+        round, skipping completion of the current round. This is not expected during
+        normal operation. Calls to <code class="literal">peerProposal</code> or <code class="literal">gotTxSet</code>
+        simply store the proposal or transaction set for use in the coming <code class="literal">Establish</code>
+        phase.
+      </p>
+<p>
+        A call to <code class="literal">timerEntry</code> first checks that the node is working
+        on the correct prior ledger. If not, it will update the mode and request
+        the correct ledger. Otherwise, the node checks whether to switch to the
+        <code class="literal">Establish</code> phase and close the ledger.
+      </p>
+<p>
+        <span class="emphasis"><em>Ledger Close</em></span>
+      </p>
+<p>
+        Under normal circumstances, the open ledger period ends when one of the following
+        is true
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            if there are transactions in the open ledger and more than <code class="literal">LEDGER_MIN_CLOSE</code>
+            have elapsed. This is the typical behavior.
+          </li>
+<li class="listitem">
+            if there are no open transactions and a suitably longer idle interval
+            has elapsed. This increases the opportunity to get some transaction into
+            the next ledger and avoids doing useless work closing an empty ledger.
+          </li>
+<li class="listitem">
+            if more than half the number of prior round peers have already closed
+            or finished this round. This indicates the node is falling behind and
+            needs to catch up.
+          </li>
+</ul></div>
+<p>
+        When closing the ledger, the node takes its initial position based on the
+        transactions in the open ledger and uses the current time as its initial
+        close time estimate. If in the proposing mode, the node shares its initial
+        position with peers. Now that the node has taken a position, it will consider
+        any peer positions for this round that arrived earlier. The node generates
+        disputed transactions for each transaction not in common with a peer's position.
+        The node also records the vote of each peer for each disputed transaction.
+      </p>
+<p>
+        In the example below, we suppose our node has closed with transactions 1,2
+        and 3. It creates disputes for transactions 2,3 and 4, since at least one
+        peer position differs on each.
+      </p>
+<p>
+        <a name="disputes_image"></a><span class="inlinemediaobject"><img src="../../images/consensus/disputes.png" width="20%"></span>
+      </p>
+<h4>
+<a name="rippled.consensus_and_validation.consensus_overview.h6"></a>
+        <span class="phrase"><a name="rippled.consensus_and_validation.consensus_overview.establish"></a></span><a class="link" href="consensus_overview.html#rippled.consensus_and_validation.consensus_overview.establish">Establish</a>
+      </h4>
+<p>
+        The establish phase is the active period of consensus in which the node exchanges
+        proposals with peers in an attempt to reach agreement on the consensus transactions
+        and effective close time.
+      </p>
+<p>
+        A call to <code class="literal">startRound</code> would forcibly begin the next consensus
+        round, skipping completion of the current round. This is not expected during
+        normal operation. Calls to <code class="literal">peerProposal</code> or <code class="literal">gotTxSet</code>
+        that reflect new positions will generate disputed transactions for any new
+        disagreements and will update the peer's vote for all disputed transactions.
+      </p>
+<p>
+        A call to <code class="literal">timerEntry</code> first checks that the node is working
+        from the correct prior ledger. If not, the node will update the mode and
+        request the correct ledger. Otherwise, the node updates the node's position
+        and considers whether to switch to the <code class="literal">Accepted</code> phase
+        and declare consensus reached. However, at least <code class="literal">LEDGER_MIN_CONSENSUS</code>
+        time must have elapsed before doing either. This allows peers an opportunity
+        to take an initial position and share it.
+      </p>
+<p>
+        <span class="emphasis"><em>Update Position</em></span>
+      </p>
+<p>
+        In order to achieve consensus, the node is looking for a transaction set
+        that is supported by a super-majority of peers. The node works towards this
+        set by adding or removing disputed transactions from its position based on
+        an increasing threshold for inclusion.
+      </p>
+<p>
+        <span class="inlinemediaobject"><img src="../../images/consensus/threshold.png" width="50%"></span>
+      </p>
+<p>
+        By starting with a lower threshold, a node initially allows a wide set of
+        transactions into its position. If the establish round continues and the
+        node is "stuck", a higher threshold can focus on accepting transactions
+        with the most support. The constants that define the thresholds and durations
+        at which the thresholds change are given by <code class="computeroutput"><span class="identifier">AV_XXX_CONSENSUS_PCT</span></code>
+        and <code class="computeroutput"><span class="identifier">AV_XXX_CONSENSUS_TIME</span></code>
+        respectively, where <code class="literal">XXX</code> is <code class="literal">INIT</code>,<code class="literal">MID</code>,<code class="literal">LATE</code>
+        and <code class="literal">STUCK</code>. The effective close time position is updated
+        using the same thresholds.
+      </p>
+<p>
+        Given the <a class="link" href="consensus_overview.html#disputes_image">example disputes above</a> and
+        an initial threshold of 50%, our node would retain its position since transaction
+        1 was not in dispute and transactions 2 and 3 have 75% support. Since its
+        position did not change, it would not need to send a new proposal to peers.
+        Peer C would not change either. Peer A would add transaction 3 to its position
+        and Peer B would remove transaction 4 from its position; both would then
+        send an updated position.
+      </p>
+<p>
+        Conversely, if the diagram reflected a later call to <code class="literal">timerEntry</code>
+        that occurs in the stuck region with a threshold of say 95%, our node would
+        remove transactions 2 and 3 from its candidate set and send an updated position.
+        Likewise, all the other peers would end up with only transaction 1 in their
+        position.
+      </p>
+<p>
+        Lastly, if our node were not in the proposing mode, it would not include
+        its own vote and just take the majority (&gt;50%) position of its peers.
+        In this example, our node would maintain its position of transactions 1,
+        2 and 3.
+      </p>
+<p>
+        <span class="emphasis"><em>Checking Consensus</em></span>
+      </p>
+<p>
+        After updating its position, the node checks for supermajority agreement
+        with its peers on its current position. This agreement is of the exact transaction
+        set, not just the support of individual transactions. That is, if our position
+        is a subset of a peer's position, that counts as a disagreement. Also recall
+        that effective close time agreement allows a supermajority of participants
+        agreeing to disagree.
+      </p>
+<p>
+        Consensus is declared when the following 3 clauses are true:
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            <code class="computeroutput"><span class="identifier">LEDGER_MIN_CONSENSUS</span></code>
+            time has elapsed in the establish phase
+          </li>
+<li class="listitem">
+            At least 75% of the prior round proposers have proposed OR this establish
+            phase is <code class="computeroutput"><span class="identifier">LEDGER_MIN_CONSENSUS</span></code>
+            longer than the last round's establish phase
+          </li>
+<li class="listitem">
+            <code class="literal">minimumConsensusPercentage</code> of ourself and our peers
+            share the same position
+          </li>
+</ul></div>
+<p>
+        The middle condition ensures slower peers have a chance to share positions,
+        but prevents waiting too long on peers that have disconnected. Additionally,
+        a node can declare that consensus has moved on if <code class="literal">minimumConsensusPercentage</code>
+        peers have sent validations and moved on to the next ledger. This outcome
+        indicates the node has fallen behind its peers and needs to catch up.
+      </p>
+<p>
+        If a node is not proposing, it does not include its own position when calculating
+        the percent of agreeing participants but otherwise follows the above logic.
+      </p>
+<p>
+        <span class="emphasis"><em>Accepting Consensus</em></span>
+      </p>
+<p>
+        Once consensus is reached (or moved on), the node switches to the <code class="literal">Accept</code>
+        phase and signals to the implementing code that the round is complete. That
+        code is responsible for using the consensus transaction set to generate the
+        next ledger and calling <code class="literal">startRound</code> to begin the next round.
+        The implementation has total freedom on ordering transactions, deciding what
+        to do if consensus moved on, determining whether to retry or abandon local
+        transactions that did not make the consensus set and updating any internal
+        state based on the consensus progress.
+      </p>
+<h4>
+<a name="rippled.consensus_and_validation.consensus_overview.h7"></a>
+        <span class="phrase"><a name="rippled.consensus_and_validation.consensus_overview.accept"></a></span><a class="link" href="consensus_overview.html#rippled.consensus_and_validation.consensus_overview.accept">Accept</a>
+      </h4>
+<p>
+        The <code class="literal">Accept</code> phase is the terminal phase of the consensus
+        algorithm. Calls to <code class="literal">timerEntry</code>, <code class="literal">peerProposal</code>
+        and <code class="literal">gotTxSet</code> will not change the internal consensus state
+        while in the accept phase. The expectation is that the application specific
+        code is working to generate the new ledger based on the consensus outcome.
+        Once complete, that code should make a call to <code class="literal">startRound</code>
+        to kick off the next consensus round. The <code class="literal">startRound</code> call
+        includes the new prior ledger, prior ledger ID and whether the round should
+        begin in the proposing or observing mode. After setting some initial state,
+        the phase transitions to <code class="literal">Open</code>. The node will also check
+        if the provided prior ledger and ID are correct, updating the mode and requesting
+        the proper ledger from the network if necessary.
+      </p>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2012-2017 Ripple Labs Inc.<p>
+        Distributed under the ISC License
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="../consensus_and_validation.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../consensus_and_validation.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="consensus_type_requirements.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>
