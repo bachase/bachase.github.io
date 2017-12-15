@@ -1,0 +1,226 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>RCLValidationsAdaptor::Ledger</title>
+<link rel="stylesheet" href="../../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../../index.html" title="rippled">
+<link rel="up" href="../ripple__RCLValidationsAdaptor.html" title="RCLValidationsAdaptor">
+<link rel="prev" href="../ripple__RCLValidationsAdaptor.html" title="RCLValidationsAdaptor">
+<link rel="next" href="Mutex.html" title="RCLValidationsAdaptor::Mutex">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="../ripple__RCLValidationsAdaptor.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ripple__RCLValidationsAdaptor.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="Mutex.html"><img src="../../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="rippled.ref.ripple__RCLValidationsAdaptor.Ledger"></a><a class="link" href="Ledger.html" title="RCLValidationsAdaptor::Ledger">RCLValidationsAdaptor::Ledger</a>
+</h4></div></div></div>
+<p>
+          <a class="indexterm" name="idm44931653936464"></a>
+
+        </p>
+<h6>
+<a name="rippled.ref.ripple__RCLValidationsAdaptor.Ledger.h0"></a>
+          <span class="phrase"><a name="rippled.ref.ripple__RCLValidationsAdaptor.Ledger.synopsis"></a></span><a class="link" href="Ledger.html#rippled.ref.ripple__RCLValidationsAdaptor.Ledger.synopsis">Synopsis</a>
+        </h6>
+<pre class="programlisting"><span class="keyword">using</span> <span class="identifier">Ledger</span> <span class="special">=</span> <span class="identifier">RCLValidatedLedger</span><span class="special">;</span>
+</pre>
+<p>
+          RCLValidationsAdaptor::Ledger
+        </p>
+<p>
+          ripple::RCLValidatedLedger
+        </p>
+<p>
+          ripple__RCLValidatedLedger
+        </p>
+<h6>
+<a name="rippled.ref.ripple__RCLValidationsAdaptor.Ledger.h1"></a>
+          <span class="phrase"><a name="rippled.ref.ripple__RCLValidationsAdaptor.Ledger.types"></a></span><a class="link" href="Ledger.html#rippled.ref.ripple__RCLValidationsAdaptor.Ledger.types">Types</a>
+        </h6>
+<div class="informaltable"><table class="table">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
+                  <p>
+                    Name
+                  </p>
+                </th>
+<th>
+                  <p>
+                    Description
+                  </p>
+                </th>
+</tr></thead>
+<tbody>
+<tr>
+<td>
+                  <p>
+                    <a class="link" href="../ripple__RCLValidatedLedger/ID.html" title="RCLValidatedLedger::ID"><span class="bold"><strong>ID</strong></span></a>
+                  </p>
+                </td>
+<td>
+                </td>
+</tr>
+<tr>
+<td>
+                  <p>
+                    <a class="link" href="../ripple__RCLValidatedLedger/Seq.html" title="RCLValidatedLedger::Seq"><span class="bold"><strong>Seq</strong></span></a>
+                  </p>
+                </td>
+<td>
+                </td>
+</tr>
+</tbody>
+</table></div>
+<h6>
+<a name="rippled.ref.ripple__RCLValidationsAdaptor.Ledger.h2"></a>
+          <span class="phrase"><a name="rippled.ref.ripple__RCLValidationsAdaptor.Ledger.member_functions"></a></span><a class="link" href="Ledger.html#rippled.ref.ripple__RCLValidationsAdaptor.Ledger.member_functions">Member
+          Functions</a>
+        </h6>
+<div class="informaltable"><table class="table">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
+                  <p>
+                    Name
+                  </p>
+                </th>
+<th>
+                  <p>
+                    Description
+                  </p>
+                </th>
+</tr></thead>
+<tbody>
+<tr>
+<td>
+                  <p>
+                    <a class="link" href="../ripple__RCLValidatedLedger/RCLValidatedLedger.html" title="RCLValidatedLedger::RCLValidatedLedger"><span class="bold"><strong>RCLValidatedLedger</strong></span></a>
+                  </p>
+                </td>
+<td>
+                </td>
+</tr>
+<tr>
+<td>
+                  <p>
+                    <a class="link" href="../ripple__RCLValidatedLedger/id.html" title="RCLValidatedLedger::id"><span class="bold"><strong>id</strong></span></a>
+                  </p>
+                </td>
+<td>
+                  <p>
+                    The ID (hash) of the ledger.
+                  </p>
+                </td>
+</tr>
+<tr>
+<td>
+                  <p>
+                    <a class="link" href="../ripple__RCLValidatedLedger/minSeq.html" title="RCLValidatedLedger::minSeq"><span class="bold"><strong>minSeq</strong></span></a>
+                  </p>
+                </td>
+<td>
+                </td>
+</tr>
+<tr>
+<td>
+                  <p>
+                    <a class="link" href="../ripple__RCLValidatedLedger/operator_lb__rb_.html" title="RCLValidatedLedger::operator[]"><span class="bold"><strong>operator[]</strong></span></a>
+                  </p>
+                </td>
+<td>
+                  <p>
+                    Lookup the ID of the ancestor ledger.
+                  </p>
+                </td>
+</tr>
+<tr>
+<td>
+                  <p>
+                    <a class="link" href="../ripple__RCLValidatedLedger/seq.html" title="RCLValidatedLedger::seq"><span class="bold"><strong>seq</strong></span></a>
+                  </p>
+                </td>
+<td>
+                  <p>
+                    The sequence (index) of the ledger.
+                  </p>
+                </td>
+</tr>
+</tbody>
+</table></div>
+<h6>
+<a name="rippled.ref.ripple__RCLValidationsAdaptor.Ledger.h3"></a>
+          <span class="phrase"><a name="rippled.ref.ripple__RCLValidationsAdaptor.Ledger.friends"></a></span><a class="link" href="Ledger.html#rippled.ref.ripple__RCLValidationsAdaptor.Ledger.friends">Friends</a>
+        </h6>
+<div class="informaltable"><table class="table">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
+                  <p>
+                    Name
+                  </p>
+                </th>
+<th>
+                  <p>
+                    Description
+                  </p>
+                </th>
+</tr></thead>
+<tbody><tr>
+<td>
+                  <p>
+                    <a class="link" href="../ripple__RCLValidatedLedger/mismatch.html" title="RCLValidatedLedger::mismatch"><span class="bold"><strong>mismatch</strong></span></a>
+                  </p>
+                </td>
+<td>
+                  <p>
+                    Find the sequence number of the earliest mismatching ancestor.
+                  </p>
+                </td>
+</tr></tbody>
+</table></div>
+<p>
+          The <a class="link" href="../ripple__LedgerTrie.html" title="LedgerTrie"><code class="computeroutput"><span class="identifier">LedgerTrie</span></code></a>
+          models a ledger's history as a map from Seq -&gt; ID. Any two ledgers that
+          have the same ID for a given Seq have the same ID for all earlier sequences
+          (e.g. shared ancestry). In practice, a ledger only conveniently has the
+          prior 256 ancestor hashes available. For <a class="link" href="../ripple__RCLValidatedLedger.html" title="RCLValidatedLedger"><code class="computeroutput"><span class="identifier">RCLValidatedLedger</span></code></a>, we treat any
+          ledgers separated by more than 256 Seq as distinct.
+        </p>
+<h6>
+<a name="rippled.ref.ripple__RCLValidationsAdaptor.Ledger.h4"></a>
+          <span class="phrase"><a name="rippled.ref.ripple__RCLValidationsAdaptor.Ledger.description"></a></span><a class="link" href="Ledger.html#rippled.ref.ripple__RCLValidationsAdaptor.Ledger.description">Description</a>
+        </h6>
+<h6>
+<a name="rippled.ref.ripple__RCLValidationsAdaptor.Ledger.h5"></a>
+          <span class="phrase"><a name="rippled.ref.ripple__RCLValidationsAdaptor.Ledger.header"></a></span><a class="link" href="Ledger.html#rippled.ref.ripple__RCLValidationsAdaptor.Ledger.header">Header</a>
+        </h6>
+<p>
+          <code class="computeroutput"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">ripple</span><span class="special">/</span><span class="identifier">app</span><span class="special">/</span><span class="identifier">consensus</span><span class="special">/</span><span class="identifier">RCLValidations</span><span class="special">.</span><span class="identifier">h</span><span class="special">&gt;</span></code>
+        </p>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2012-2017 Ripple Labs Inc.<p>
+        Distributed under the ISC License
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="../ripple__RCLValidationsAdaptor.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ripple__RCLValidationsAdaptor.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="Mutex.html"><img src="../../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

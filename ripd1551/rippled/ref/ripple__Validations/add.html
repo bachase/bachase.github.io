@@ -1,0 +1,117 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Validations::add</title>
+<link rel="stylesheet" href="../../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../../index.html" title="rippled">
+<link rel="up" href="../ripple__Validations.html" title="Validations">
+<link rel="prev" href="adaptor_.html" title="Validations::adaptor_">
+<link rel="next" href="byLedger.html" title="Validations::byLedger">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="adaptor_.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ripple__Validations.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="byLedger.html"><img src="../../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="rippled.ref.ripple__Validations.add"></a><a class="link" href="add.html" title="Validations::add">Validations::add</a>
+</h4></div></div></div>
+<p>
+          <a class="indexterm" name="idm44931649342992"></a>
+Add a new validation.
+        </p>
+<h6>
+<a name="rippled.ref.ripple__Validations.add.h0"></a>
+          <span class="phrase"><a name="rippled.ref.ripple__Validations.add.synopsis"></a></span><a class="link" href="add.html#rippled.ref.ripple__Validations.add.synopsis">Synopsis</a>
+        </h6>
+<pre class="programlisting"><span class="identifier">ValStatus</span>
+<span class="identifier">add</span><span class="special">(</span>
+    <span class="identifier">NodeKey</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">key</span><span class="special">,</span>
+    <span class="identifier">Validation</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">val</span><span class="special">);</span>
+</pre>
+<h6>
+<a name="rippled.ref.ripple__Validations.add.h1"></a>
+          <span class="phrase"><a name="rippled.ref.ripple__Validations.add.description"></a></span><a class="link" href="add.html#rippled.ref.ripple__Validations.add.description">Description</a>
+        </h6>
+<p>
+          Attempt to add a new validation.
+        </p>
+<h6>
+<a name="rippled.ref.ripple__Validations.add.h2"></a>
+          <span class="phrase"><a name="rippled.ref.ripple__Validations.add.parameters"></a></span><a class="link" href="add.html#rippled.ref.ripple__Validations.add.parameters">Parameters</a>
+        </h6>
+<div class="informaltable"><table class="table">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
+                  <p>
+                    Name
+                  </p>
+                </th>
+<th>
+                  <p>
+                    Description
+                  </p>
+                </th>
+</tr></thead>
+<tbody>
+<tr>
+<td>
+                  <p>
+                    <code class="computeroutput"><span class="identifier">key</span></code>
+                  </p>
+                </td>
+<td>
+                  <p>
+                    The master key associated with this validation
+                  </p>
+                </td>
+</tr>
+<tr>
+<td>
+                  <p>
+                    <code class="computeroutput"><span class="identifier">val</span></code>
+                  </p>
+                </td>
+<td>
+                  <p>
+                    The validationo to store
+                  </p>
+                </td>
+</tr>
+</tbody>
+</table></div>
+<h6>
+<a name="rippled.ref.ripple__Validations.add.h3"></a>
+          <span class="phrase"><a name="rippled.ref.ripple__Validations.add.return_value"></a></span><a class="link" href="add.html#rippled.ref.ripple__Validations.add.return_value">Return
+          Value</a>
+        </h6>
+<p>
+          The outcome
+        </p>
+<h6>
+<a name="rippled.ref.ripple__Validations.add.h4"></a>
+          <span class="phrase"><a name="rippled.ref.ripple__Validations.add.remarks"></a></span><a class="link" href="add.html#rippled.ref.ripple__Validations.add.remarks">Remarks</a>
+        </h6>
+<p>
+          The provided key may differ from the validations's key() member if the
+          validator is using ephemeral signing keys.
+        </p>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2012-2017 Ripple Labs Inc.<p>
+        Distributed under the ISC License
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="adaptor_.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ripple__Validations.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="byLedger.html"><img src="../../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

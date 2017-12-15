@@ -1,0 +1,115 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Validations::getNodesAfter (1 of 2 overloads)</title>
+<link rel="stylesheet" href="../../../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../../../index.html" title="rippled">
+<link rel="up" href="../getNodesAfter.html" title="Validations::getNodesAfter">
+<link rel="prev" href="../getNodesAfter.html" title="Validations::getNodesAfter">
+<link rel="next" href="overload2.html" title="Validations::getNodesAfter (2 of 2 overloads)">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="../getNodesAfter.html"><img src="../../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../getNodesAfter.html"><img src="../../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../../index.html"><img src="../../../../images/home.png" alt="Home"></a><a accesskey="n" href="overload2.html"><img src="../../../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="rippled.ref.ripple__Validations.getNodesAfter.overload1"></a><a class="link" href="overload1.html" title="Validations::getNodesAfter (1 of 2 overloads)">Validations::getNodesAfter
+          (1 of 2 overloads)</a>
+</h5></div></div></div>
+<p>
+            Count the number of current trusted validators working on a ledger after
+            the specified one.
+          </p>
+<h6>
+<a name="rippled.ref.ripple__Validations.getNodesAfter.overload1.h0"></a>
+            <span class="phrase"><a name="rippled.ref.ripple__Validations.getNodesAfter.overload1.synopsis"></a></span><a class="link" href="overload1.html#rippled.ref.ripple__Validations.getNodesAfter.overload1.synopsis">Synopsis</a>
+          </h6>
+<pre class="programlisting"><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
+<span class="identifier">getNodesAfter</span><span class="special">(</span>
+    <span class="identifier">Ledger</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">ledger</span><span class="special">,</span>
+    <span class="identifier">ID</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">ledgerID</span><span class="special">);</span>
+</pre>
+<h6>
+<a name="rippled.ref.ripple__Validations.getNodesAfter.overload1.h1"></a>
+            <span class="phrase"><a name="rippled.ref.ripple__Validations.getNodesAfter.overload1.description"></a></span><a class="link" href="overload1.html#rippled.ref.ripple__Validations.getNodesAfter.overload1.description">Description</a>
+          </h6>
+<h6>
+<a name="rippled.ref.ripple__Validations.getNodesAfter.overload1.h2"></a>
+            <span class="phrase"><a name="rippled.ref.ripple__Validations.getNodesAfter.overload1.parameters"></a></span><a class="link" href="overload1.html#rippled.ref.ripple__Validations.getNodesAfter.overload1.parameters">Parameters</a>
+          </h6>
+<div class="informaltable"><table class="table">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
+                    <p>
+                      Name
+                    </p>
+                  </th>
+<th>
+                    <p>
+                      Description
+                    </p>
+                  </th>
+</tr></thead>
+<tbody>
+<tr>
+<td>
+                    <p>
+                      <code class="computeroutput"><span class="identifier">ledger</span></code>
+                    </p>
+                  </td>
+<td>
+                    <p>
+                      The working ledger
+                    </p>
+                  </td>
+</tr>
+<tr>
+<td>
+                    <p>
+                      <code class="computeroutput"><span class="identifier">ledgerID</span></code>
+                    </p>
+                  </td>
+<td>
+                    <p>
+                      The preferred ledger
+                    </p>
+                  </td>
+</tr>
+</tbody>
+</table></div>
+<h6>
+<a name="rippled.ref.ripple__Validations.getNodesAfter.overload1.h3"></a>
+            <span class="phrase"><a name="rippled.ref.ripple__Validations.getNodesAfter.overload1.return_value"></a></span><a class="link" href="overload1.html#rippled.ref.ripple__Validations.getNodesAfter.overload1.return_value">Return
+            Value</a>
+          </h6>
+<p>
+            The number of current trusted validators working on a descendent of the
+            preferred ledger
+          </p>
+<h6>
+<a name="rippled.ref.ripple__Validations.getNodesAfter.overload1.h4"></a>
+            <span class="phrase"><a name="rippled.ref.ripple__Validations.getNodesAfter.overload1.remarks"></a></span><a class="link" href="overload1.html#rippled.ref.ripple__Validations.getNodesAfter.overload1.remarks">Remarks</a>
+          </h6>
+<p>
+            If ledger.id() != ledgerID, only counts immediate child ledgers of ledgerID
+          </p>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2012-2017 Ripple Labs Inc.<p>
+        Distributed under the ISC License
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="../getNodesAfter.html"><img src="../../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../getNodesAfter.html"><img src="../../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../../index.html"><img src="../../../../images/home.png" alt="Home"></a><a accesskey="n" href="overload2.html"><img src="../../../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

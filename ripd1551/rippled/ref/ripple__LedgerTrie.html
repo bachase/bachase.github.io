@@ -1,0 +1,309 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>LedgerTrie</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="rippled">
+<link rel="up" href="../ref.html" title="Reference">
+<link rel="prev" href="ripple__LedgerEntryTypesMatch/visitEntry.html" title="LedgerEntryTypesMatch::visitEntry">
+<link rel="next" href="ripple__LedgerTrie/LedgerTrie.html" title="LedgerTrie::LedgerTrie">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="ripple__LedgerEntryTypesMatch/visitEntry.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="ripple__LedgerTrie/LedgerTrie.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="rippled.ref.ripple__LedgerTrie"></a><a class="link" href="ripple__LedgerTrie.html" title="LedgerTrie">LedgerTrie</a>
+</h3></div></div></div>
+<div class="toc"><dl class="toc">
+<dt><span class="section"><a href="ripple__LedgerTrie/LedgerTrie.html">LedgerTrie::LedgerTrie</a></span></dt>
+<dt><span class="section"><a href="ripple__LedgerTrie/branchSupport.html">LedgerTrie::branchSupport</a></span></dt>
+<dt><span class="section"><a href="ripple__LedgerTrie/checkInvariants.html">LedgerTrie::checkInvariants</a></span></dt>
+<dt><span class="section"><a href="ripple__LedgerTrie/dump.html">LedgerTrie::dump</a></span></dt>
+<dt><span class="section"><a href="ripple__LedgerTrie/dumpImpl.html">LedgerTrie::dumpImpl</a></span></dt>
+<dt><span class="section"><a href="ripple__LedgerTrie/find.html">LedgerTrie::find</a></span></dt>
+<dt><span class="section"><a href="ripple__LedgerTrie/getJson.html">LedgerTrie::getJson</a></span></dt>
+<dt><span class="section"><a href="ripple__LedgerTrie/getPreferred.html">LedgerTrie::getPreferred</a></span></dt>
+<dt><span class="section"><a href="ripple__LedgerTrie/insert.html">LedgerTrie::insert</a></span></dt>
+<dt><span class="section"><a href="ripple__LedgerTrie/remove.html">LedgerTrie::remove</a></span></dt>
+<dt><span class="section"><a href="ripple__LedgerTrie/root.html">LedgerTrie::root</a></span></dt>
+<dt><span class="section"><a href="ripple__LedgerTrie/tipSupport.html">LedgerTrie::tipSupport</a></span></dt>
+</dl></div>
+<p>
+        Ancestry trie of ledgers.
+      </p>
+<h5>
+<a name="rippled.ref.ripple__LedgerTrie.h0"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__LedgerTrie.synopsis"></a></span><a class="link" href="ripple__LedgerTrie.html#rippled.ref.ripple__LedgerTrie.synopsis">Synopsis</a>
+      </h5>
+<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span>
+    <span class="keyword">class</span> <span class="identifier">Ledger</span><span class="special">&gt;</span>
+<span class="keyword">class</span> <span class="identifier">LedgerTrie</span>
+</pre>
+<h5>
+<a name="rippled.ref.ripple__LedgerTrie.h1"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__LedgerTrie.member_functions"></a></span><a class="link" href="ripple__LedgerTrie.html#rippled.ref.ripple__LedgerTrie.member_functions">Member
+        Functions</a>
+      </h5>
+<div class="informaltable"><table class="table">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
+                <p>
+                  Name
+                </p>
+              </th>
+<th>
+                <p>
+                  Description
+                </p>
+              </th>
+</tr></thead>
+<tbody>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__LedgerTrie/LedgerTrie.html" title="LedgerTrie::LedgerTrie"><span class="bold"><strong>LedgerTrie</strong></span></a>
+                </p>
+              </td>
+<td>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__LedgerTrie/branchSupport.html" title="LedgerTrie::branchSupport"><span class="bold"><strong>branchSupport</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Return the count of branch support for the specific ledger.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__LedgerTrie/checkInvariants.html" title="LedgerTrie::checkInvariants"><span class="bold"><strong>checkInvariants</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Check the compressed trie and support invariants.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__LedgerTrie/dump.html" title="LedgerTrie::dump"><span class="bold"><strong>dump</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Dump an ascii representation of the trie to the stream.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__LedgerTrie/getJson.html" title="LedgerTrie::getJson"><span class="bold"><strong>getJson</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Dump JSON representation of trie state.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__LedgerTrie/getPreferred.html" title="LedgerTrie::getPreferred"><span class="bold"><strong>getPreferred</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Return the preferred ledger ID.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__LedgerTrie/insert.html" title="LedgerTrie::insert"><span class="bold"><strong>insert</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Insert and/or increment the support for the given ledger.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__LedgerTrie/remove.html" title="LedgerTrie::remove"><span class="bold"><strong>remove</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Decrease support for a ledger, removing and compressing if possible.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="ripple__LedgerTrie/tipSupport.html" title="LedgerTrie::tipSupport"><span class="bold"><strong>tipSupport</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Return count of tip support for the specific ledger.
+                </p>
+              </td>
+</tr>
+</tbody>
+</table></div>
+<h5>
+<a name="rippled.ref.ripple__LedgerTrie.h2"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__LedgerTrie.description"></a></span><a class="link" href="ripple__LedgerTrie.html#rippled.ref.ripple__LedgerTrie.description">Description</a>
+      </h5>
+<p>
+        Combination of a compressed trie and merkle-ish tree that maintains validation
+        support of recent ledgers based on their ancestry.
+      </p>
+<p>
+        The compressed trie structure comes from recognizing that ledger history
+        can be viewed as a string over the alphabet of ledger ids. That is, a given
+        ledger with sequence number <code class="computeroutput"><span class="identifier">seq</span></code>
+        defines a length <code class="computeroutput"><span class="identifier">seq</span></code> string,
+        with i-th entry equal to the id of the ancestor ledger with sequence number
+        i. "Sequence" strings with a common prefix share those ancestor
+        ledgers in common. Tracking this ancestry information and relations across
+        all validated ledgers is done conveniently in a compressed trie. A node in
+        the trie is an ancestor of all its children. If a parent node has sequence
+        number <code class="computeroutput"><span class="identifier">seq</span></code>, each child node
+        has a different ledger starting at <code class="computeroutput"><span class="identifier">seq</span><span class="special">+</span><span class="number">1</span></code>. The compression
+        comes from the invariant that any non-root node with 0 tip support has either
+        no children or multiple children. In other words, a non-root 0-tip-support
+        node can be combined with its single child.
+      </p>
+<p>
+        The merkle-ish property is based on the branch support calculation. Each
+        node has a tipSupport, which is the number of current validations for that
+        particular ledger. The branch support is the sum of the tip support and the
+        branch support of that node's children:
+      </p>
+<pre class="programlisting"><span class="identifier">node</span><span class="special">-&gt;</span><span class="identifier">branchSupport</span> <span class="special">=</span> <span class="identifier">node</span><span class="special">-&gt;</span><span class="identifier">tipSupport</span>
+                    <span class="special">+</span> <span class="identifier">sum_</span><span class="special">(</span><span class="identifier">child</span> <span class="special">:</span> <span class="identifier">node</span><span class="special">-&gt;</span><span class="identifier">children</span><span class="special">)</span> <span class="identifier">child</span><span class="special">-&gt;</span><span class="identifier">branchSupport</span>
+</pre>
+<p>
+        This is analagous to the merkle tree property in which a node's hash is the
+        hash of the concatenation of its child node hashes.
+      </p>
+<p>
+        The templated Ledger type represents a ledger which has a unique history.
+        It should be lightweight and cheap to copy.
+      </p>
+<pre class="programlisting"><span class="comment">// Identifier types that should be equality-comparable and copyable</span>
+<span class="keyword">struct</span> <span class="identifier">ID</span><span class="special">;</span>
+<span class="keyword">struct</span> <span class="identifier">Seq</span><span class="special">;</span>
+
+<span class="keyword">struct</span> <span class="identifier">Ledger</span>
+<span class="special">{</span>
+   <span class="comment">// The default ledger represents a ledger that prefixes all other</span>
+   <span class="comment">// ledgers, e.g. the genesis ledger</span>
+   <span class="identifier">Ledger</span><span class="special">();</span>
+
+   <span class="identifier">Ledger</span><span class="special">(</span><span class="identifier">Ledger</span> <span class="special">&amp;);</span>
+   <span class="identifier">Ledger</span><span class="special">&amp;</span> <span class="keyword">operator</span><span class="special">=(</span><span class="identifier">Ledger</span> <span class="special">);</span>
+
+   <span class="comment">// Return the sequence number of this ledger</span>
+   <span class="identifier">Seq</span> <span class="identifier">seq</span><span class="special">()</span> <span class="keyword">const</span><span class="special">;</span>
+
+   <span class="comment">// Return the ID of this ledger's ancestor with given sequence number</span>
+   <span class="comment">// or ID{0} if unknown</span>
+   <span class="identifier">ID</span>
+   <span class="keyword">operator</span><span class="special">[](</span><span class="identifier">Seq</span> <span class="identifier">s</span><span class="special">);</span>
+
+<span class="special">};</span>
+
+<span class="comment">// Return the sequence number of the first possible mismatching ancestor</span>
+<span class="comment">// between two ledgers</span>
+<span class="identifier">Seq</span>
+<span class="identifier">mismatch</span><span class="special">(</span><span class="identifier">ledgerA</span><span class="special">,</span> <span class="identifier">ledgerB</span><span class="special">);</span>
+</pre>
+<p>
+        The unique history invariant of ledgers requires any ledgers that agree on
+        the id of a given sequence number agree on ALL ancestors before that ledger:
+      </p>
+<pre class="programlisting"><span class="identifier">Ledger</span> <span class="identifier">a</span><span class="special">,</span><span class="identifier">b</span><span class="special">;</span>
+<span class="comment">// For all Seq s:</span>
+<span class="keyword">if</span><span class="special">(</span><span class="identifier">a</span><span class="special">[</span><span class="identifier">s</span><span class="special">]</span> <span class="special">==</span> <span class="identifier">b</span><span class="special">[</span><span class="identifier">s</span><span class="special">]);</span>
+    <span class="keyword">for</span><span class="special">(</span><span class="identifier">Seq</span> <span class="identifier">p</span> <span class="special">=</span> <span class="number">0</span><span class="special">;</span> <span class="identifier">p</span> <span class="special">&lt;</span> <span class="identifier">s</span><span class="special">;</span> <span class="special">++</span><span class="identifier">p</span><span class="special">)</span>
+        <span class="identifier">assert</span><span class="special">(</span><span class="identifier">a</span><span class="special">[</span><span class="identifier">p</span><span class="special">]</span> <span class="special">==</span> <span class="identifier">b</span><span class="special">[</span><span class="identifier">p</span><span class="special">]);</span>
+</pre>
+<h5>
+<a name="rippled.ref.ripple__LedgerTrie.h3"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__LedgerTrie.template_parameters"></a></span><a class="link" href="ripple__LedgerTrie.html#rippled.ref.ripple__LedgerTrie.template_parameters">Template
+        Parameters</a>
+      </h5>
+<div class="informaltable"><table class="table">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
+                <p>
+                  Type
+                </p>
+              </th>
+<th>
+                <p>
+                  Description
+                </p>
+              </th>
+</tr></thead>
+<tbody><tr>
+<td>
+                <p>
+                  <code class="computeroutput"><span class="identifier">Ledger</span></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  A type representing a ledger and its history
+                </p>
+              </td>
+</tr></tbody>
+</table></div>
+<h5>
+<a name="rippled.ref.ripple__LedgerTrie.h4"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__LedgerTrie.header"></a></span><a class="link" href="ripple__LedgerTrie.html#rippled.ref.ripple__LedgerTrie.header">Header</a>
+      </h5>
+<p>
+        <code class="computeroutput"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">ripple</span><span class="special">/</span><span class="identifier">consensus</span><span class="special">/</span><span class="identifier">LedgerTrie</span><span class="special">.</span><span class="identifier">h</span><span class="special">&gt;</span></code>
+      </p>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2012-2017 Ripple Labs Inc.<p>
+        Distributed under the ISC License
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="ripple__LedgerEntryTypesMatch/visitEntry.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="ripple__LedgerTrie/LedgerTrie.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

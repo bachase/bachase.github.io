@@ -1,0 +1,133 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>ValStatus</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="rippled">
+<link rel="up" href="../ref.html" title="Reference">
+<link rel="prev" href="ripple__TxConsequences/potentialSpend.html" title="TxConsequences::potentialSpend">
+<link rel="next" href="ripple__ValidationParms.html" title="ValidationParms">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="ripple__TxConsequences/potentialSpend.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="ripple__ValidationParms.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="rippled.ref.ripple__ValStatus"></a><a class="link" href="ripple__ValStatus.html" title="ValStatus">ValStatus</a>
+</h3></div></div></div>
+<p>
+        <a class="indexterm" name="idm44931649780656"></a>
+Status of newly received validation.
+      </p>
+<h5>
+<a name="rippled.ref.ripple__ValStatus.h0"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__ValStatus.synopsis"></a></span><a class="link" href="ripple__ValStatus.html#rippled.ref.ripple__ValStatus.synopsis">Synopsis</a>
+      </h5>
+<pre class="programlisting"><span class="keyword">enum</span> <span class="identifier">ValStatus</span>
+</pre>
+<p>
+        <a class="indexterm" name="idm44931649774752"></a>
+ <a class="indexterm" name="idm44931649773648"></a>
+ <a class="indexterm" name="idm44931649772544"></a>
+ <a class="indexterm" name="idm44931649771440"></a>
+
+      </p>
+<h5>
+<a name="rippled.ref.ripple__ValStatus.h1"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__ValStatus.values"></a></span><a class="link" href="ripple__ValStatus.html#rippled.ref.ripple__ValStatus.values">Values</a>
+      </h5>
+<div class="informaltable"><table class="table">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
+                <p>
+                  Name
+                </p>
+              </th>
+<th>
+                <p>
+                  Description
+                </p>
+              </th>
+</tr></thead>
+<tbody>
+<tr>
+<td>
+                <p>
+                  current
+                </p>
+              </td>
+<td>
+                <p>
+                  This was a new validation and was added.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  repeat
+                </p>
+              </td>
+<td>
+                <p>
+                  Already had this exact same validation.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  stale
+                </p>
+              </td>
+<td>
+                <p>
+                  Not current or was older than current from this node.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  badFullSeq
+                </p>
+              </td>
+<td>
+                <p>
+                  A validation was marked full but it violates increasing seq requirement.
+                </p>
+              </td>
+</tr>
+</tbody>
+</table></div>
+<h5>
+<a name="rippled.ref.ripple__ValStatus.h2"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__ValStatus.description"></a></span><a class="link" href="ripple__ValStatus.html#rippled.ref.ripple__ValStatus.description">Description</a>
+      </h5>
+<h5>
+<a name="rippled.ref.ripple__ValStatus.h3"></a>
+        <span class="phrase"><a name="rippled.ref.ripple__ValStatus.header"></a></span><a class="link" href="ripple__ValStatus.html#rippled.ref.ripple__ValStatus.header">Header</a>
+      </h5>
+<p>
+        <code class="computeroutput"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">ripple</span><span class="special">/</span><span class="identifier">consensus</span><span class="special">/</span><span class="identifier">Validations</span><span class="special">.</span><span class="identifier">h</span><span class="special">&gt;</span></code>
+      </p>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2012-2017 Ripple Labs Inc.<p>
+        Distributed under the ISC License
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="ripple__TxConsequences/potentialSpend.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="ripple__ValidationParms.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>
