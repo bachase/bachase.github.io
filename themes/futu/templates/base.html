@@ -46,8 +46,7 @@
 
 <body>
   <header>
-    <a class="header__verification" href="{{ get_url(path='/') }}">{{ config.title }}</a>
-    <p class="header__official">Official</p>
+    <a href="{{ get_url(path='/') }}">{{ config.title }}</a>
     {%- if config.extra.nav %}
     <nav>
       <ul>
