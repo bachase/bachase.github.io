@@ -1,9 +1,7 @@
 ---
-title: "Post With Code"
-author: "Harlow Malloc"
+title: "equivalent errors for stabilizer codes"
 date: "2025-06-26"
-categories: [news, code, analysis]
-image: "image.jpg"
+draft: true
 ---
 
 This is a post with executable code.
