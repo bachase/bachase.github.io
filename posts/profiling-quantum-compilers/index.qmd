@@ -1,5 +1,6 @@
 ---
 title: "Profiling Quantum Compilers: Introduction"
+date: 2025-08-21
 resources:
   - "profile.json"
 ---
