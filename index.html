@@ -130,7 +130,7 @@ window.Quarto = {
 </script>
 
 <link rel="stylesheet" href="styles.css">
-</head>
+<link rel="alternate" type="application/rss+xml" title="bachase notes" href="index.xml" data-external="1"></head>
 
 <body class="nav-fixed quarto-light">
 
@@ -155,6 +155,11 @@ window.Quarto = {
   </li>  
   <li class="nav-item compact">
     <a class="nav-link" href="https://github.com/bachase"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="./index.xml"> <i class="bi bi-rss" role="img">
 </i> 
 <span class="menu-text"></span></a>
   </li>  
@@ -214,7 +219,7 @@ Title
 </thead>
 <tbody class="list">
 
-<tr data-index="0" data-listing-date-sort="1755734400000" data-listing-file-modified-sort="1755809877645" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1673" data-listing-title-sort="Profiling Quantum Compilers: Introduction" data-listing-filename-sort="index.qmd">
+<tr data-index="0" data-listing-date-sort="1755734400000" data-listing-file-modified-sort="1755878325215" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1673" data-listing-title-sort="Profiling Quantum Compilers: Introduction" data-listing-filename-sort="index.qmd">
 <td>
 <span class="listing-date">2025-08-21</span>
 </td>
@@ -300,7 +305,7 @@ Title
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp("https:\/\/bachase\.github\.io\/");
+        var filterRegex = new RegExp("https:\/\/bachase\.github\.io");
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
