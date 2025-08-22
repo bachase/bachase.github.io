@@ -1,12 +1,13 @@
 ---
 title: "Profiling Quantum Compilers: Introduction"
 date: 2025-08-21
+date-modified: 2025-08-22
 resources:
   - "profile.json"
 ---
 
 As part of my work on [`ucc`](https://github.com/unitaryfoundation/ucc), I've spent
-most of my time to date on benchmarking. In the companion repository [`ucc-bench`](https://github.com/unitaryfoundation/ucc-bench), we've collected a small suite of representative circuits and built tooling to automate profiling of quantum compilers, especially as new versions are released.
+most of my time to date on benchmarking. In the companion repository [`ucc-bench`](https://github.com/unitaryfoundation/ucc-bench), we've collected a small suite of representative circuits and built tooling to automate benchmarking performance of quantum compilers, especially as new versions are released.
 
 Recently, my focus has shifted more toward the internals of quantum compilation, and I wanted to get a deeper understanding of how these compilers actually work. I've read papers and stepped through code with a debugger, but the performance angle has been nagging at me. We're seeing a trend of moving core compiler optimization passes to high-performance languages like Rust [^1], so I figured a great way to learn why is to see where today's compilers spend their time. By profiling a compiler on a benchmark circuit, we can gain insight into both architecture and performance bottlenecks.
 
@@ -82,11 +83,10 @@ For more complex applications, the time ordered view is a great way to understan
 The left heavy view throws out the time-ordered aspects, groups similar call stacks together, and then puts the heavier (longest running) stacks to the left of the plot. It has the same mouse-over and click details as the time-order view. Use this view to see where the program is spending its time overall, regardless of the order of execution. For this example, it nicely shows most time in `main()` is spent on `hard_task()` vs `easy_task()`, even though there are corresponding calls to `work()` below each. This view is useful when there are lots of interleaved function calls but you just care about the aggregate time spent in each alternate.
 
 ##### Sandwich View
-![](./sandwich.png)
-
 This last view has two useful aspects. The first is the table in the image above. This shows the total time and self-time spent in a function call, and as a percent of the entire profile result.
 
 ###### Two Times
+![](./sandwich.png)
 Functions with large/large percent of self-time are hotspots to focus on for optimization. Self-time means the CPU is busy working directly in that function, so you can consider zooming in and doing some micro-benchmarking and optimizations on just that function. For our simple example, it nicely shows that the CPU is really spending its time in that silly loop in `work()`. If that were real code though, finding a way to optimize it would nicely improve overall performance.
 
 Functions with large/large percent of total-time indicate the primary paths of program execution. This is the total CPU time spent where this function was somewhere in the call stack, but not necessarily where the program was running when sampled. So by definition, `main()` and other high-level functions have large percentages, but that doesn't really help you understand much. Instead, you would want to scroll down this list to get to the aforementioned goldilocks level. For me, this is when I get to a function and go "huh, I'm surprised it spent that much time here". For our simple example, we see that `hard_task` is indeed ten times heavier than `easy_task`.
@@ -100,6 +100,19 @@ If you click on a row in this list, you get the sandwich view shown above. This 
 With that whirlwind tour of profiling behind us, how will we explore quantum compilers? [https://github.com/bachase/quantum-compiler-profiling](https://github.com/bachase/quantum-compiler-profiling) is a repository with all you need!
 
 The code uses a 100-qubit QFT circuit in [`ucc-bench`](https://github.com/unitaryfoundation/ucc-bench) (by way of [benchpress](https://github.com/Qiskit/benchpress) and [QASMBench](https://github.com/pnnl/QASMBench)). The script in `main.py` then transpiles/compiles this circuit via [Qiskit](https://www.ibm.com/quantum/qiskit), `ucc`, [pytket](https://docs.quantinuum.com/tket/api-docs/index.html), [Cirq](https://quantumai.google/cirq), or [pyqpanda3](https://pypi.org/project/pyqpanda3/). There's a corresponding `run_bench.sh` to run [^morefunction] and generate the profiles using `py-spy`, and there are sub-directories with some profiles checked in. I generated these profiles under a GitHub codespace (which you can do yourself by forking within GitHub). A tad more detail is in the `README`, but the upshot is we will use speedscope to explore each compiler's results in the [`native.profiles`](https://github.com/bachase/quantum-compiler-profiling/tree/main/native.profiles) directory in future posts.
+
+The QFT circuit was chosen based in recent `ucc-bench` [performance results](https://github.com/unitaryfoundation/ucc-bench/blob/main/results/ucc-benchmarks-8-core-U22.04/compilation_benchmarks/20250819/20250819125708.eca4a630a31567ea794b1e8f90d5038928110223.compilation.csv):
+
+|Compiler      |benchmark_id|raw_multiq_gates|compile_time_ms|compiled_multiq_gates|
+|--------------|------------|----------------|---------------|---------------------|
+|ucc           |qft         |10050           |478.4261       |2740                 |
+|pytket-peep   |qft         |10050           |48776.9968     |4498                 |
+|qiskit-default|qft         |10050           |509.0576       |3570                 |
+|cirq          |qft         |10050           |32392.2503     |4648                 |
+|pyqpanda3     |qft         |10050           |130.838        |2740                 |
+
+
+There is some reduction in two-qubit gates, and the circuit takes a non-trivial amount of compile time. So something interesting is happening!.
 
 [^morefunction]: Unlike the example in this post, I did not use `--function` to aggregate samples to start of functions. I might go back and do so, but I don't a priori know much about each function. Some might be lengthy with lots of loops, so I'd rather keep samples of different lines separate to potentially identify that structure.
 
