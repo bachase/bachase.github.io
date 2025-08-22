@@ -19,7 +19,7 @@
 
 
 
-<p>As part of my work on <a href="https://github.com/unitaryfoundation/ucc"><code>ucc</code></a>, I’ve spent most of my time to date on benchmarking. In the companion repository <a href="https://github.com/unitaryfoundation/ucc-bench"><code>ucc-bench</code></a>, we’ve collected a small suite of representative circuits and built tooling to automate profiling of quantum compilers, especially as new versions are released.</p>
+<p>As part of my work on <a href="https://github.com/unitaryfoundation/ucc"><code>ucc</code></a>, I’ve spent most of my time to date on benchmarking. In the companion repository <a href="https://github.com/unitaryfoundation/ucc-bench"><code>ucc-bench</code></a>, we’ve collected a small suite of representative circuits and built tooling to automate benchmarking performance of quantum compilers, especially as new versions are released.</p>
 <p>Recently, my focus has shifted more toward the internals of quantum compilation, and I wanted to get a deeper understanding of how these compilers actually work. I’ve read papers and stepped through code with a debugger, but the performance angle has been nagging at me. We’re seeing a trend of moving core compiler optimization passes to high-performance languages like Rust <sup>1</sup>, so I figured a great way to learn why is to see where today’s compilers spend their time. By profiling a compiler on a benchmark circuit, we can gain insight into both architecture and performance bottlenecks.</p>
 <div class="no-row-height column-margin column-container"><div id="fn1"><p><sup>1</sup>&nbsp;Notably <a href="https://medium.com/qiskit/new-weve-started-using-rust-in-qiskit-for-better-performance-a3676433ca8c">Qiskit</a> and <a href="https://github.com/CQCL/tket2">tket</a></p></div></div><p>This is the first post in a series where I’ll explore the performance of quantum compilers by putting them under the profiler.</p>
 <section id="profiling-quantum-compilers" class="level2 page-columns page-full">
@@ -130,11 +130,10 @@ font-style: inherit;">--</span> python main.py</span></code></pre></div>
 </section>
 <section id="sandwich-view" class="level5">
 <h5 class="anchored" data-anchor-id="sandwich-view">Sandwich View</h5>
-<p><img src="https://bachase.github.io/posts/profiling-quantum-compilers/sandwich.png" class="img-fluid"></p>
 <p>This last view has two useful aspects. The first is the table in the image above. This shows the total time and self-time spent in a function call, and as a percent of the entire profile result.</p>
 <section id="two-times" class="level6">
 <h6 class="anchored" data-anchor-id="two-times">Two Times</h6>
-<p>Functions with large/large percent of self-time are hotspots to focus on for optimization. Self-time means the CPU is busy working directly in that function, so you can consider zooming in and doing some micro-benchmarking and optimizations on just that function. For our simple example, it nicely shows that the CPU is really spending its time in that silly loop in <code>work()</code>. If that were real code though, finding a way to optimize it would nicely improve overall performance.</p>
+<p><img src="https://bachase.github.io/posts/profiling-quantum-compilers/sandwich.png" class="img-fluid"> Functions with large/large percent of self-time are hotspots to focus on for optimization. Self-time means the CPU is busy working directly in that function, so you can consider zooming in and doing some micro-benchmarking and optimizations on just that function. For our simple example, it nicely shows that the CPU is really spending its time in that silly loop in <code>work()</code>. If that were real code though, finding a way to optimize it would nicely improve overall performance.</p>
 <p>Functions with large/large percent of total-time indicate the primary paths of program execution. This is the total CPU time spent where this function was somewhere in the call stack, but not necessarily where the program was running when sampled. So by definition, <code>main()</code> and other high-level functions have large percentages, but that doesn’t really help you understand much. Instead, you would want to scroll down this list to get to the aforementioned goldilocks level. For me, this is when I get to a function and go “huh, I’m surprised it spent that much time here”. For our simple example, we see that <code>hard_task</code> is indeed ten times heavier than <code>easy_task</code>.</p>
 </section>
 <section id="the-actual-sandwich" class="level6">
@@ -148,7 +147,64 @@ font-style: inherit;">--</span> python main.py</span></code></pre></div>
 <h3 class="anchored" data-anchor-id="setup">Setup</h3>
 <p>With that whirlwind tour of profiling behind us, how will we explore quantum compilers? <a href="https://github.com/bachase/quantum-compiler-profiling">https://github.com/bachase/quantum-compiler-profiling</a> is a repository with all you need!</p>
 <p>The code uses a 100-qubit QFT circuit in <a href="https://github.com/unitaryfoundation/ucc-bench"><code>ucc-bench</code></a> (by way of <a href="https://github.com/Qiskit/benchpress">benchpress</a> and <a href="https://github.com/pnnl/QASMBench">QASMBench</a>). The script in <code>main.py</code> then transpiles/compiles this circuit via <a href="https://www.ibm.com/quantum/qiskit">Qiskit</a>, <code>ucc</code>, <a href="https://docs.quantinuum.com/tket/api-docs/index.html">pytket</a>, <a href="https://quantumai.google/cirq">Cirq</a>, or <a href="https://pypi.org/project/pyqpanda3/">pyqpanda3</a>. There’s a corresponding <code>run_bench.sh</code> to run <sup>6</sup> and generate the profiles using <code>py-spy</code>, and there are sub-directories with some profiles checked in. I generated these profiles under a GitHub codespace (which you can do yourself by forking within GitHub). A tad more detail is in the <code>README</code>, but the upshot is we will use speedscope to explore each compiler’s results in the <a href="https://github.com/bachase/quantum-compiler-profiling/tree/main/native.profiles"><code>native.profiles</code></a> directory in future posts.</p>
-<div class="no-row-height column-margin column-container"><div id="fn6"><p><sup>6</sup>&nbsp;Unlike the example in this post, I did not use <code>--function</code> to aggregate samples to start of functions. I might go back and do so, but I don’t a priori know much about each function. Some might be lengthy with lots of loops, so I’d rather keep samples of different lines separate to potentially identify that structure.</p></div></div><p><em>AI Disclaimer</em>: I’ve used LLMs to review and give feedback on this post, but the original content was written by me.</p>
+<div class="no-row-height column-margin column-container"><div id="fn6"><p><sup>6</sup>&nbsp;Unlike the example in this post, I did not use <code>--function</code> to aggregate samples to start of functions. I might go back and do so, but I don’t a priori know much about each function. Some might be lengthy with lots of loops, so I’d rather keep samples of different lines separate to potentially identify that structure.</p></div></div><p>The QFT circuit was chosen based in recent <code>ucc-bench</code> <a href="https://github.com/unitaryfoundation/ucc-bench/blob/main/results/ucc-benchmarks-8-core-U22.04/compilation_benchmarks/20250819/20250819125708.eca4a630a31567ea794b1e8f90d5038928110223.compilation.csv">performance results</a>:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 17%">
+<col style="width: 15%">
+<col style="width: 20%">
+<col style="width: 19%">
+<col style="width: 26%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Compiler</th>
+<th>benchmark_id</th>
+<th>raw_multiq_gates</th>
+<th>compile_time_ms</th>
+<th>compiled_multiq_gates</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>ucc</td>
+<td>qft</td>
+<td>10050</td>
+<td>478.4261</td>
+<td>2740</td>
+</tr>
+<tr class="even">
+<td>pytket-peep</td>
+<td>qft</td>
+<td>10050</td>
+<td>48776.9968</td>
+<td>4498</td>
+</tr>
+<tr class="odd">
+<td>qiskit-default</td>
+<td>qft</td>
+<td>10050</td>
+<td>509.0576</td>
+<td>3570</td>
+</tr>
+<tr class="even">
+<td>cirq</td>
+<td>qft</td>
+<td>10050</td>
+<td>32392.2503</td>
+<td>4648</td>
+</tr>
+<tr class="odd">
+<td>pyqpanda3</td>
+<td>qft</td>
+<td>10050</td>
+<td>130.838</td>
+<td>2740</td>
+</tr>
+</tbody>
+</table>
+<p>There is some reduction in two-qubit gates, and the circuit takes a non-trivial amount of compile time. So something interesting is happening!.</p>
+<p><em>AI Disclaimer</em>: I’ve used LLMs to review and give feedback on this post, but the original content was written by me.</p>
 
 
 </section>
