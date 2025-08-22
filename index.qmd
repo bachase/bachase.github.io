@@ -10,6 +10,7 @@ listing:
   table-striped: true
   date-format: iso
   fields: [date,title]
+  feed: true
 page-layout: full
 title-block-banner: true
 ---

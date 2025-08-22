@@ -3,11 +3,15 @@ project:
 
 website:
   title: "bachase notes"
+  site-url: https://bachase.github.io
+  description: "bachase's notes on things he's learning about"
   navbar:
     right:
       - about.qmd
       - icon: github
         href: https://github.com/bachase
+      - icon: rss
+        href: index.xml
 format:
   html:
     theme:
