@@ -1,7 +1,7 @@
 ---
 title: "Profiling Quantum Compilers: Introduction"
 date: 2025-08-21
-date-modified: 2025-08-22
+date-modified: 2025-09-08
 resources:
   - "profile.json"
 ---
@@ -99,7 +99,7 @@ If you click on a row in this list, you get the sandwich view shown above. This 
 
 With that whirlwind tour of profiling behind us, how will we explore quantum compilers? [https://github.com/bachase/quantum-compiler-profiling](https://github.com/bachase/quantum-compiler-profiling) is a repository with all you need!
 
-The code uses a 100-qubit QFT circuit in [`ucc-bench`](https://github.com/unitaryfoundation/ucc-bench) (by way of [benchpress](https://github.com/Qiskit/benchpress) and [QASMBench](https://github.com/pnnl/QASMBench)). The script in `main.py` then transpiles/compiles this circuit via [Qiskit](https://www.ibm.com/quantum/qiskit), `ucc`, [pytket](https://docs.quantinuum.com/tket/api-docs/index.html), [Cirq](https://quantumai.google/cirq), or [pyqpanda3](https://pypi.org/project/pyqpanda3/). There's a corresponding `run_bench.sh` to run [^morefunction] and generate the profiles using `py-spy`, and there are sub-directories with some profiles checked in. I generated these profiles under a GitHub codespace (which you can do yourself by forking within GitHub). A tad more detail is in the `README`, but the upshot is we will use speedscope to explore each compiler's results in the [`native.profiles`](https://github.com/bachase/quantum-compiler-profiling/tree/main/native.profiles) directory in future posts.
+The code uses a 100-qubit QFT circuit in [`ucc-bench`](https://github.com/unitaryfoundation/ucc-bench) (by way of [benchpress](https://github.com/Qiskit/benchpress) and [QASMBench](https://github.com/pnnl/QASMBench)). The script in `main.py` then transpiles/compiles this circuit via [Qiskit](https://www.ibm.com/quantum/qiskit), [`ucc`](https://github.com/unitaryfoundation/ucc), [pytket](https://docs.quantinuum.com/tket/api-docs/index.html), [Cirq](https://quantumai.google/cirq), or [pyqpanda3](https://pypi.org/project/pyqpanda3/). There's a corresponding `run_bench.sh` to generate the profiles using `py-spy`, and there are sub-directories with some profiles checked in[^morefunction]. I generated these profiles under a GitHub codespace (which you can do yourself by forking within GitHub). A tad more detail is in the `README`, but the upshot is we will use speedscope to explore each compiler's results in the [`native.profiles`](https://github.com/bachase/quantum-compiler-profiling/tree/main/native.profiles) directory in future posts.
 
 The QFT circuit was chosen based in recent `ucc-bench` [performance results](https://github.com/unitaryfoundation/ucc-bench/blob/main/results/ucc-benchmarks-8-core-U22.04/compilation_benchmarks/20250819/20250819125708.eca4a630a31567ea794b1e8f90d5038928110223.compilation.csv):
 
@@ -112,8 +112,8 @@ The QFT circuit was chosen based in recent `ucc-bench` [performance results](htt
 |pyqpanda3     |qft         |10050           |130.838        |2740                 |
 
 
-There is some reduction in two-qubit gates, and the circuit takes a non-trivial amount of compile time. So something interesting is happening!.
+There is some reduction in two-qubit gates, and the circuit takes a non-trivial amount of compile time. So something interesting is happening!
 
-[^morefunction]: Unlike the example in this post, I did not use `--function` to aggregate samples to start of functions. I might go back and do so, but I don't a priori know much about each function. Some might be lengthy with lots of loops, so I'd rather keep samples of different lines separate to potentially identify that structure.
+[^morefunction]: I ran profiles with & without `--function` to aggregate samples to start of functions. I don't a priori know much about each function. Some might be lengthy with lots of internal loops, so I'd rather keep samples of different lines separate to potentially identify that structure. But having the aggregated view with `--function` will also help coarse grain over those details when first analyzing results.
 
 _AI Disclaimer_: I've used LLMs to review and give feedback on this post, but the original content was written by me.
