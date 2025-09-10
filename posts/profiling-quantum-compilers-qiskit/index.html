@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.34">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2025-09-10">
+
+<title>Profiling Quantum Compilers: Qiskit – bachase notes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-c8ad9e5dbd60b7b70b38521ab19b7da4.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-d68be38d83eca2bb035acf846ffba811.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">bachase notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/bachase"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="../../index.xml"> <i class="bi bi-rss" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
+    </div>
+<!-- main -->
+<main class="content page-columns page-full" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Profiling Quantum Compilers: Qiskit</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 10, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>This post is the first follow-up in the quantum compiler profiling <a href="posts/profiling-quantum-compilers/">series</a>, focusing on Qiskit version 2.1.1. Let’s dive right in!</p>
+<section id="overview" class="level2 page-columns page-full">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>We begin with a top-level view of the compilation (or transpilation in Qiskit lingo). This took a total of 1.04 seconds. You can inspect this function-aggregated view in speedscope <a href="https://www.speedscope.app/#profileURL=https%3A%2F%2Fraw.githubusercontent.com%2Fbachase%2Fquantum-compiler-profiling%2Frefs%2Fheads%2Fmain%2Fnative.functionagg.profiles%2Fqiskit.profile.json&amp;title=Qiskit%20Profile%20FunctionAgg">here</a>. <img src="./qiskit_top_level.png" class="img-fluid"></p>
+<p>I’ve labeled the 3 primary calls within the profiling function</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_qiskit(qasm):</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="im">from</span> qiskit <span class="im">import</span> QuantumCircuit, transpile <span class="co"># (1)</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    circuit <span class="op">=</span> QuantumCircuit.from_qasm_str(qasm) <span class="co"># (2)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> transpile(                            <span class="co"># (3)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        circuit, basis_gates<span class="op">=</span>[<span class="st">"rz"</span>, <span class="st">"rx"</span>, <span class="st">"ry"</span>, <span class="st">"h"</span>, <span class="st">"cx"</span>], optimization_level<span class="op">=</span><span class="dv">3</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="no-bullets">
+<ul>
+<li><span class="circle">1</span> [39%, 410ms] The call tree starting from <code>_find_and_load</code> importing Qiskit.</li>
+<li><span class="circle">2</span> [29%, 300ms] in <code>from_qasm_str</code> parsing the 25K line QASM file into Qiskit’s in-memory circuit representation.</li>
+<li><span class="circle">3</span> [25%, 260ms] in <code>transpile</code> actually optimizing the circuit.</li>
+</ul>
+</div>
+<p>Let’s dig in a bit more.</p>
+<section id="import" class="level3">
+<h3 class="anchored" data-anchor-id="import"><code>import</code></h3>
+<p>Almost 40% of this run is on imports! I suspect this will be similar for most libraries we profile, as there is a lot of dynamic importing and logic these libraries are doing to support different features, lazily load some more complex dependencies etc. I’m not going to explore which import(s) are taking all this time but a good bit comes from Qiskit itself importing numpy as seen in the sandwich view here: <img src="numpy_import.png" class="img-fluid"></p>
+<p>But I do want to highlight this overhead is meaningful for users! For interactive sessions like notebooks you only pay for this once, but in scripts (CI tests etc), you pay for this each time the script is run. This might explain the appeal of languages like Rust, where most of this is resolved at compile time.</p>
+<p>For diving deeper, checkout <a href="https://tenthousandmeters.com/blog/python-behind-the-scenes-11-how-the-python-import-system-works/">this</a> old but still solid reference on what Python does when you type <code>from package import foo</code>.</p>
+</section>
+<section id="parsing-qasm" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="parsing-qasm">Parsing QASM</h3>
+<p>Next up is <code>from_qasm_str</code>, which takes 30% of the overall runtime. For this exploration, I switched to the non-function aggregated sampling (speedscope <a href="https://www.speedscope.app/#profileURL=https%3A%2F%2Fraw.githubusercontent.com%2Fbachase%2Fquantum-compiler-profiling%2Frefs%2Fheads%2Fmain%2Fnative.profiles%2Fqiskit.profile.json&amp;title=Qiskit%20Profile">here</a>) because functions like <code>from_bytecode</code> are pretty lengthy. We want to know specifically where inside that function the code is spending time, which is lost with function aggregation. Looking at the sandwich view around <code>from_qasm_str</code> we have some structure</p>
+<p><img src="loads.png" class="img-fluid"></p>
+<p>For <span class="circle">1</span> <code>loads</code> itself is defined in <a href="https://github.com/Qiskit/qiskit/blob/6dd1267466e6effb9b1a60e98ecaae1ac718e5b2/qiskit/qasm2/__init__.py#L578"><code>qasm2/__init__.py</code></a>, reproduced in part here</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> loads(...):</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    custom_instructions <span class="op">=</span> <span class="bu">list</span>(custom_instructions)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> _parse.from_bytecode(</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>        _qasm2.bytecode_from_string(</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>            string,</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><code>_qasm2.bytecode_from_string</code> calls directly into Rust to generate some bytecode representation<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> of the parsed QASM that must be easier to manage, and probably is a simpler post-validated representation. But importantly, that call itself doesn’t show up in any samples, so it must be pretty fast.</p>
+<div class="no-row-height column-margin column-container"><div id="fn1"><p><sup>1</sup>&nbsp;<a href="https://en.wikipedia.org/wiki/Bytecode">Bytecode</a> is an instruction set oriented view of a program that simplifies processing by an interpreter. Python itself compiles your code (at execution time) to bytecode before it is run by the Python interpreter. QASM doesn’t have an official bytecode specification, but converting it to bytecode before interpreting is a good strategy to separate parsing + validation from the downstream use.</p></div></div><p>For <span class="circle">2</span> and <span class="circle">3</span>, the samples we have are all in <code>_parse.from_bytecode</code>, where the bytecode is used to construct the in-memory circuit. The two spots are nearby lines <a href="https://github.com/Qiskit/qiskit/blob/6dd1267466e6effb9b1a60e98ecaae1ac718e5b2/qiskit/qasm2/parse.py#L254">here</a></p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> op <span class="kw">in</span> bytecode:</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    ...</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> opcode <span class="op">==</span> OpCode.Gate:</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>            gate_id, parameters, op_qubits <span class="op">=</span> op.operands <span class="co"># (2)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>            qc._append(</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                CircuitInstruction(gates[gate_id](<span class="op">*</span>parameters),</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                [qubits[q] <span class="cf">for</span> q <span class="kw">in</span> op_qubits]) <span class="co"># (3)</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>            )</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    ...</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Look at the functions called from these lines, that first <code>__init__</code> is the initializer for an <code>Rz</code> gate, <code>_append</code> is adding a newly created gate to <code>QuantumCircuit</code>, and <code>params</code> is both setting and adding a parameter to the quantum instruction representing a gate. Almost all the hex addresses <span class="circle">4</span> are calls inside the CPython/libpython shared object file, but I didn’t have debug symbols around to know what they are. But down in <span class="circle">5</span>, we see calls into the Qiskit Rust code to create the Rust instances of these circuit instructions that are then wrapped in Python. I’m not familiar yet with Qiskit internals, but there will always be some overhead to go back and forth to Rust to create each gate instance.</p>
+<p>I don’t have any deep insights, but am interested to see the parsing performance of other libraries. It’s also interesting to see the mix of Python and Rust in Qiskit, where the initial bytecode parse is super fast, but there is still work to improve the in-memory construction of circuit representations afterwards.</p>
+</section>
+<section id="compiling-aka-transpiling" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="compiling-aka-transpiling">Compiling (aka Transpiling)</h3>
+<p>Ok, finally showtime! Again, we return to the sandwich view. Note that this is “left-heavy” within the view, meaning the calls show are not time-ordered, but shifted left by longest call.</p>
+<p><img src="transpile.png" class="img-fluid"></p>
+<p>Qiskit has a sophisticated <a href="https://quantum.cloud.ibm.com/docs/en/guides/transpile-with-pass-managers">PassManager class</a> for specifying the transpilation passes to run. Our example code here used the default passes with the highest optimization setting. The <code>_run_workflow</code> and <code>execute</code> calls in the callstack are the machinery to dispatch the different passes. But the actual work is done in a specific pass <code>run</code> function. The level 3 passes are defined <a href="https://github.com/Qiskit/qiskit/blob/6dd1267466e6effb9b1a60e98ecaae1ac718e5b2/qiskit/transpiler/preset_passmanagers/level3.py#L27">here</a>, but only two stand out in the profiling results <a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.</p>
+<div class="no-row-height column-margin column-container"><div id="fn2"><p><sup>2</sup>&nbsp;Note that the results shown here were sampled at 100 times per second, meaning each sample is 10 milliseconds. This transpile section was ~250ms, so we have 25 samples. The limiting sampling factor was the GitHub workspace machine, which had trouble keeping up at a higher rate (but which I used to get access to native stack trace details). I did run locally with 1000 times per second sampling (but no native symbol support on my Mac), which showed similar time spent in these functions.</p></div></div><section id="minimumpoint" class="level4">
+<h4 class="anchored" data-anchor-id="minimumpoint">MinimumPoint</h4>
+<p><span class="circle">1</span> is part of the <a href="https://github.com/Qiskit/qiskit/blob/6dd1267466e6effb9b1a60e98ecaae1ac718e5b2/qiskit/transpiler/passes/utils/minimum_point.py#L100"><code>MinimumPoint</code></a> transformation pass. This is used by other iterative passes to see if successive runs have improved some circuit metrics. It was hard to infer what these passes were from the sampled callstacks, so I instead put a breakpoint in the debugger to take a peek when the MinimumPoint class was constructed. I walked up the stack to see the passmanager this is part of and found: <img src="optimization_passes.png" class="img-fluid"> So this pass group is running a bunch of optimization passes, and this <code>MinimumPoint</code> class is checking when it’s converged to a local minimum “best” for depth and size. But the heavy part here is all in one line</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ...</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="cf">elif</span> score <span class="op">&lt;</span> state.score:</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    state.since <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    state.score <span class="op">=</span> score</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    state.dag <span class="op">=</span> deepcopy(dag) <span class="co">#&lt;-- this one</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Once a better score is reached, a full copy of the entire DAG is captured. You can scroll below in speedscope to see all the calls this results in.</p>
+<p>Given the Python object model, a true independent copy of an object requires copying each internal object as well. This is expensive because Python variables are fundamentally references (pointers) to objects in memory. A simple (or “shallow”) copy of the DAG would just create a new list of pointers to the exact same gate objects. Modifying a gate in the new DAG would also modify it in the old one.</p>
+<p><code>deepcopy</code>, in contrast, must recursively walk the entire object graph—visiting every single gate, parameter, and qubit reference—and create a brand-new, independent Python object for each one. This process involves a massive number of new object allocations and reference lookups, all managed by the Python interpreter, making it far slower than a single, contiguous memory copy you might see in a language like C.</p>
+<p>For this large circuit, it’s a heavy operation. If the IR were represented in Rust with a less pointer-heavy structure (like a more flat memory layout), it could be possible to optimize this. But I’m guessing this is complex as long as parts of the IR are still managed as Python objects at a granular level, versus entirely represented in Rust.</p>
+</section>
+<section id="commutative-cancellation" class="level4">
+<h4 class="anchored" data-anchor-id="commutative-cancellation">Commutative Cancellation</h4>
+<p><span class="circle">2</span> is the other heavy pass spot, with two call stacks corresponding to <code>commutative_cancellation</code> which is (unsurprisingly) a Rust-accelerated pass that uses commutation relations to identify cancellation opportunites between gates. I haven’t tried compiling the Rust components of Qiskit with debug symbols to get the locations within the Rust code directly. But for the longer 30ms call (3 samples), 20 ms (2 samples) are taken when releasing memory in <code>free</code>. In the other, 10 ms (1 sample) of the 20ms are spent hashing, which I assume is a lookup for common gate pairs.</p>
+<p>If you look in the time-ordered view you see there are two commutative cancellation pass runs surrounding the minimum point call. Perhaps there could be savings by retaining the analysis or hash lookup across calls.</p>
+<p><img src="commutative_cancel.png" class="img-fluid"></p>
+</section>
+<section id="extra-extra---qiskit-transpiler-profiling" class="level4 page-columns page-full">
+<h4 class="anchored" data-anchor-id="extra-extra---qiskit-transpiler-profiling">Extra Extra - Qiskit Transpiler Profiling</h4>
+<p>Qiskit nicely provides a callback hook to capture the impact of various passes, including time spent on passes. This is a nice domain-specific companion to the general profiling results presented here. Running this <a href="https://github.com/bachase/quantum-compiler-profiling/blob/edebf4b8848321cfaec834226f5e5719d2f2fedc/main.py#L10">extra code</a>, we see <a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<div class="no-row-height column-margin column-container"><div id="fn3"><p><sup>3</sup>&nbsp;Qiskit has both analysis passes and transformation passes. The former calculates some properties of the DAG, but doesn’t modify it. The latter does modify it. For simplifying this table, I’ve excluded analysis passes as they didn’t have much runtime in this example.</p></div></div><table class="caption-top table">
+<colgroup>
+<col style="width: 45%">
+<col style="width: 16%">
+<col style="width: 10%">
+<col style="width: 12%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Pass</th>
+<th style="text-align: right;">Time (s)</th>
+<th style="text-align: right;">Size</th>
+<th style="text-align: right;">Depth</th>
+<th style="text-align: right;">2Q Gates</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">UnitarySynthesis</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">25100</td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">10050</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">HighLevelSynthesis</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">25100</td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">10050</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BasisTranslator</td>
+<td style="text-align: right;">0.0004</td>
+<td style="text-align: right;">25100</td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">10050</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ElidePermutations</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">25100</td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">10050</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">RemoveDiagonalGatesBeforeMeasure</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">25100</td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">10050</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">RemoveIdentityEquivalent</td>
+<td style="text-align: right;">0.0006</td>
+<td style="text-align: right;"><strong>15380</strong></td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">10050</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">InverseCancellation</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;"><strong>8900</strong></td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;"><strong>3570</strong></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ContractIdleWiresInControlFlow</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">8900</td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CommutativeCancellation</td>
+<td style="text-align: right;"><strong>0.0118</strong></td>
+<td style="text-align: right;"><strong>7289</strong></td>
+<td style="text-align: right;"><strong>698</strong></td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ConsolidateBlocks</td>
+<td style="text-align: right;">0.0035</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Split2QUnitaries</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">UnitarySynthesis</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">HighLevelSynthesis</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BasisTranslator</td>
+<td style="text-align: right;">0.0006</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">MinimumPoint</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ConsolidateBlocks</td>
+<td style="text-align: right;">0.0035</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">UnitarySynthesis</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">RemoveIdentityEquivalent</td>
+<td style="text-align: right;">0.0001</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Optimize1qGatesDecomposition</td>
+<td style="text-align: right;">0.0012</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CommutativeCancellation</td>
+<td style="text-align: right;">0.0056</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ContractIdleWiresInControlFlow</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">MinimumPoint</td>
+<td style="text-align: right;"><strong>0.0483</strong></td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ConsolidateBlocks</td>
+<td style="text-align: right;">0.0035</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">UnitarySynthesis</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">RemoveIdentityEquivalent</td>
+<td style="text-align: right;">0.0001</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Optimize1qGatesDecomposition</td>
+<td style="text-align: right;">0.0012</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CommutativeCancellation</td>
+<td style="text-align: right;">0.0057</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ContractIdleWiresInControlFlow</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">MinimumPoint</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+</tbody>
+</table>
+<p>For each column, rows in <strong>bold</strong> had meaningful time duration or change in circuit metric. The most meaningful passes are</p>
+<section id="removeidentityequivalent" class="level5">
+<h5 class="anchored" data-anchor-id="removeidentityequivalent"><a href="https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.transpiler.passes.RemoveIdentityEquivalent">RemoveIdentityEquivalent</a></h5>
+<p>“Removes gates whose effect is close to an identity operation up to a global phase and up to the specified tolerance.” Looking at the QASM, we can directly see many small angle rotations that are close to identity:</p>
+<pre><code>rz(pi/2097152);
+rz(0) q[14];</code></pre>
+<p>This doesn’t change the depth or the number of two qubit gates, but is quite a lot of single qubit gates!</p>
+</section>
+<section id="inversecancellation" class="level5">
+<h5 class="anchored" data-anchor-id="inversecancellation"><a href="https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.transpiler.passes.InverseCancellation">InverseCancellation</a></h5>
+<p>“Cancel specific Gates which are inverses of each other when they occur back-to-back.” The only reduction in two-qubit gates! Doing nothing is always easier than doing gates that end up doing nothing! After the prior pass, these opportunities are successive cnots on the same qubits:</p>
+<pre><code>cx q[99],q[79];
+cx q[99],q[79];</code></pre>
+</section>
+<section id="commutativecancellation" class="level5">
+<h5 class="anchored" data-anchor-id="commutativecancellation"><a href="https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.transpiler.passes.CommutativeCancellation">CommutativeCancellation</a></h5>
+<p>“Cancel the redundant (self-adjoint) gates through commutation relations.” This is the first reduction in gate depth and comes from being able to push gates around via commutation relations and then cancel them once close together. There’s not a local QASM excerpt to show for this conveniently. But looking at the Rust <a href="https://github.com/Qiskit/qiskit/blob/d595578b62e10f47b6f2515a9cdd687b898ac9e4/crates/transpiler/src/passes/commutation_cancellation.rs">implementation</a>, it looks like this pass treats each qubit as a wire, and then for commuting sets, pushes gates around into a canonical ordering (when they have well defined commutation relations), after which it then combines or cancels gates, replacing with a consolidated gate.</p>
+</section>
+</section>
+</section>
+</section>
+<section id="tldr" class="level2">
+<h2 class="anchored" data-anchor-id="tldr">TL;DR</h2>
+<p>Only a quarter of the runtime was spent in actual transpilation. The rest was in importing Qiskit itself, and parsing the QASM.</p>
+<p>You can see the power of the rust Rewrites in e.g.&nbsp;parsing qasm to bytecode. But you can also see the rewrite in progress, where some overhead going back and forth between Python and Rust, and the Python memory model influencing things like copying a DAG.</p>
+<p>For transpilation, most <em>time</em> was spent copying the Dag once a fixed point was reached on the optimization pass. By looking at Qiskit specific profiling output via a callback, we saw the few passes that had the largest impact on improvements. Most were applying fairly straightforward simplifications – but those have a big impact on the size, depth and ultimate number of two-qubit gates!</p>
+
+
+</section>
+
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/bachase\.github\.io");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -1,1 +1,22 @@
 /* css styles */
+
+/* Matches styles in flameshot labels */
+.circle {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #e33;   /* Red background */
+  color: white;       /* White number */
+  text-align: center;
+  line-height: 22px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.no-bullets {
+  list-style: none;
+  padding-left: 0;   /* pull text flush if you like */
+  margin-left: 0;
+}
+.no-bullets li { margin: .35rem 0; }

@@ -9,8 +9,436 @@
 <link>https://bachase.github.io/</link>
 <atom:link href="https://bachase.github.io/index.xml" rel="self" type="application/rss+xml"/>
 <description>bachase&#39;s notes on things he&#39;s learning about</description>
-<generator>quarto-1.7.33</generator>
-<lastBuildDate>Thu, 21 Aug 2025 00:00:00 GMT</lastBuildDate>
+<generator>quarto-1.7.34</generator>
+<lastBuildDate>Wed, 10 Sep 2025 00:00:00 GMT</lastBuildDate>
+<item>
+  <title>Profiling Quantum Compilers: Qiskit</title>
+  <link>https://bachase.github.io/posts/profiling-quantum-compilers-qiskit/</link>
+  <description><![CDATA[ 
+
+
+
+
+<p>This post is the first follow-up in the quantum compiler profiling <a href="posts/profiling-quantum-compilers/">series</a>, focusing on Qiskit version 2.1.1. Let’s dive right in!</p>
+<section id="overview" class="level2 page-columns page-full">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>We begin with a top-level view of the compilation (or transpilation in Qiskit lingo). This took a total of 1.04 seconds. You can inspect this function-aggregated view in speedscope <a href="https://www.speedscope.app/#profileURL=https%3A%2F%2Fraw.githubusercontent.com%2Fbachase%2Fquantum-compiler-profiling%2Frefs%2Fheads%2Fmain%2Fnative.functionagg.profiles%2Fqiskit.profile.json&amp;title=Qiskit%20Profile%20FunctionAgg">here</a>. <img src="https://bachase.github.io/posts/profiling-quantum-compilers-qiskit/qiskit_top_level.png" class="img-fluid"></p>
+<p>I’ve labeled the 3 primary calls within the profiling function</p>
+<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> run_qiskit(qasm):</span>
+<span id="cb1-2">    <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> qiskit <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> QuantumCircuit, transpile <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># (1)</span></span>
+<span id="cb1-3">    circuit <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> QuantumCircuit.from_qasm_str(qasm) <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># (2)</span></span>
+<span id="cb1-4">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> transpile(                            <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># (3)</span></span>
+<span id="cb1-5">        circuit, basis_gates<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>[<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"rz"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"rx"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"ry"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"h"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"cx"</span>], optimization_level<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span></span>
+<span id="cb1-6">    )</span></code></pre></div>
+<div class="no-bullets">
+<ul>
+<li><span class="circle">1</span> [39%, 410ms] The call tree starting from <code>_find_and_load</code> importing Qiskit.</li>
+<li><span class="circle">2</span> [29%, 300ms] in <code>from_qasm_str</code> parsing the 25K line QASM file into Qiskit’s in-memory circuit representation.</li>
+<li><span class="circle">3</span> [25%, 260ms] in <code>transpile</code> actually optimizing the circuit.</li>
+</ul>
+</div>
+<p>Let’s dig in a bit more.</p>
+<section id="import" class="level3">
+<h3 class="anchored" data-anchor-id="import"><code>import</code></h3>
+<p>Almost 40% of this run is on imports! I suspect this will be similar for most libraries we profile, as there is a lot of dynamic importing and logic these libraries are doing to support different features, lazily load some more complex dependencies etc. I’m not going to explore which import(s) are taking all this time but a good bit comes from Qiskit itself importing numpy as seen in the sandwich view here: <img src="https://bachase.github.io/posts/profiling-quantum-compilers-qiskit/numpy_import.png" class="img-fluid"></p>
+<p>But I do want to highlight this overhead is meaningful for users! For interactive sessions like notebooks you only pay for this once, but in scripts (CI tests etc), you pay for this each time the script is run. This might explain the appeal of languages like Rust, where most of this is resolved at compile time.</p>
+<p>For diving deeper, checkout <a href="https://tenthousandmeters.com/blog/python-behind-the-scenes-11-how-the-python-import-system-works/">this</a> old but still solid reference on what Python does when you type <code>from package import foo</code>.</p>
+</section>
+<section id="parsing-qasm" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="parsing-qasm">Parsing QASM</h3>
+<p>Next up is <code>from_qasm_str</code>, which takes 30% of the overall runtime. For this exploration, I switched to the non-function aggregated sampling (speedscope <a href="https://www.speedscope.app/#profileURL=https%3A%2F%2Fraw.githubusercontent.com%2Fbachase%2Fquantum-compiler-profiling%2Frefs%2Fheads%2Fmain%2Fnative.profiles%2Fqiskit.profile.json&amp;title=Qiskit%20Profile">here</a>) because functions like <code>from_bytecode</code> are pretty lengthy. We want to know specifically where inside that function the code is spending time, which is lost with function aggregation. Looking at the sandwich view around <code>from_qasm_str</code> we have some structure</p>
+<p><img src="https://bachase.github.io/posts/profiling-quantum-compilers-qiskit/loads.png" class="img-fluid"></p>
+<p>For <span class="circle">1</span> <code>loads</code> itself is defined in <a href="https://github.com/Qiskit/qiskit/blob/6dd1267466e6effb9b1a60e98ecaae1ac718e5b2/qiskit/qasm2/__init__.py#L578"><code>qasm2/__init__.py</code></a>, reproduced in part here</p>
+<div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> loads(...):</span>
+<span id="cb2-2">    custom_instructions <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">list</span>(custom_instructions)</span>
+<span id="cb2-3">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> _parse.from_bytecode(</span>
+<span id="cb2-4">        _qasm2.bytecode_from_string(</span>
+<span id="cb2-5">            string,</span></code></pre></div>
+<p><code>_qasm2.bytecode_from_string</code> calls directly into Rust to generate some bytecode representation<sup>1</sup> of the parsed QASM that must be easier to manage, and probably is a simpler post-validated representation. But importantly, that call itself doesn’t show up in any samples, so it must be pretty fast.</p>
+<div class="no-row-height column-margin column-container"><div id="fn1"><p><sup>1</sup>&nbsp;<a href="https://en.wikipedia.org/wiki/Bytecode">Bytecode</a> is an instruction set oriented view of a program that simplifies processing by an interpreter. Python itself compiles your code (at execution time) to bytecode before it is run by the Python interpreter. QASM doesn’t have an official bytecode specification, but converting it to bytecode before interpreting is a good strategy to separate parsing + validation from the downstream use.</p></div></div><p>For <span class="circle">2</span> and <span class="circle">3</span>, the samples we have are all in <code>_parse.from_bytecode</code>, where the bytecode is used to construct the in-memory circuit. The two spots are nearby lines <a href="https://github.com/Qiskit/qiskit/blob/6dd1267466e6effb9b1a60e98ecaae1ac718e5b2/qiskit/qasm2/parse.py#L254">here</a></p>
+<div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> op <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">in</span> bytecode:</span>
+<span id="cb3-2">    ...</span>
+<span id="cb3-3">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> opcode <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> OpCode.Gate:</span>
+<span id="cb3-4">            gate_id, parameters, op_qubits <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> op.operands <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># (2)</span></span>
+<span id="cb3-5">            qc._append(</span>
+<span id="cb3-6">                CircuitInstruction(gates[gate_id](<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span>parameters),</span>
+<span id="cb3-7">                [qubits[q] <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> q <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">in</span> op_qubits]) <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># (3)</span></span>
+<span id="cb3-8">            )</span>
+<span id="cb3-9">    ...</span></code></pre></div>
+<p>Look at the functions called from these lines, that first <code>__init__</code> is the initializer for an <code>Rz</code> gate, <code>_append</code> is adding a newly created gate to <code>QuantumCircuit</code>, and <code>params</code> is both setting and adding a parameter to the quantum instruction representing a gate. Almost all the hex addresses <span class="circle">4</span> are calls inside the CPython/libpython shared object file, but I didn’t have debug symbols around to know what they are. But down in <span class="circle">5</span>, we see calls into the Qiskit Rust code to create the Rust instances of these circuit instructions that are then wrapped in Python. I’m not familiar yet with Qiskit internals, but there will always be some overhead to go back and forth to Rust to create each gate instance.</p>
+<p>I don’t have any deep insights, but am interested to see the parsing performance of other libraries. It’s also interesting to see the mix of Python and Rust in Qiskit, where the initial bytecode parse is super fast, but there is still work to improve the in-memory construction of circuit representations afterwards.</p>
+</section>
+<section id="compiling-aka-transpiling" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="compiling-aka-transpiling">Compiling (aka Transpiling)</h3>
+<p>Ok, finally showtime! Again, we return to the sandwich view. Note that this is “left-heavy” within the view, meaning the calls show are not time-ordered, but shifted left by longest call.</p>
+<p><img src="https://bachase.github.io/posts/profiling-quantum-compilers-qiskit/transpile.png" class="img-fluid"></p>
+<p>Qiskit has a sophisticated <a href="https://quantum.cloud.ibm.com/docs/en/guides/transpile-with-pass-managers">PassManager class</a> for specifying the transpilation passes to run. Our example code here used the default passes with the highest optimization setting. The <code>_run_workflow</code> and <code>execute</code> calls in the callstack are the machinery to dispatch the different passes. But the actual work is done in a specific pass <code>run</code> function. The level 3 passes are defined <a href="https://github.com/Qiskit/qiskit/blob/6dd1267466e6effb9b1a60e98ecaae1ac718e5b2/qiskit/transpiler/preset_passmanagers/level3.py#L27">here</a>, but only two stand out in the profiling results <sup>2</sup>.</p>
+<div class="no-row-height column-margin column-container"><div id="fn2"><p><sup>2</sup>&nbsp;Note that the results shown here were sampled at 100 times per second, meaning each sample is 10 milliseconds. This transpile section was ~250ms, so we have 25 samples. The limiting sampling factor was the GitHub workspace machine, which had trouble keeping up at a higher rate (but which I used to get access to native stack trace details). I did run locally with 1000 times per second sampling (but no native symbol support on my Mac), which showed similar time spent in these functions.</p></div></div><section id="minimumpoint" class="level4">
+<h4 class="anchored" data-anchor-id="minimumpoint">MinimumPoint</h4>
+<p><span class="circle">1</span> is part of the <a href="https://github.com/Qiskit/qiskit/blob/6dd1267466e6effb9b1a60e98ecaae1ac718e5b2/qiskit/transpiler/passes/utils/minimum_point.py#L100"><code>MinimumPoint</code></a> transformation pass. This is used by other iterative passes to see if successive runs have improved some circuit metrics. It was hard to infer what these passes were from the sampled callstacks, so I instead put a breakpoint in the debugger to take a peek when the MinimumPoint class was constructed. I walked up the stack to see the passmanager this is part of and found: <img src="https://bachase.github.io/posts/profiling-quantum-compilers-qiskit/optimization_passes.png" class="img-fluid"> So this pass group is running a bunch of optimization passes, and this <code>MinimumPoint</code> class is checking when it’s converged to a local minimum “best” for depth and size. But the heavy part here is all in one line</p>
+<div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># ...</span></span>
+<span id="cb4-2"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">elif</span> score <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&lt;</span> state.score:</span>
+<span id="cb4-3">    state.since <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span></span>
+<span id="cb4-4">    state.score <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> score</span>
+<span id="cb4-5">    state.dag <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> deepcopy(dag) <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#&lt;-- this one</span></span></code></pre></div>
+<p>Once a better score is reached, a full copy of the entire DAG is captured. You can scroll below in speedscope to see all the calls this results in.</p>
+<p>Given the Python object model, a true independent copy of an object requires copying each internal object as well. This is expensive because Python variables are fundamentally references (pointers) to objects in memory. A simple (or “shallow”) copy of the DAG would just create a new list of pointers to the exact same gate objects. Modifying a gate in the new DAG would also modify it in the old one.</p>
+<p><code>deepcopy</code>, in contrast, must recursively walk the entire object graph—visiting every single gate, parameter, and qubit reference—and create a brand-new, independent Python object for each one. This process involves a massive number of new object allocations and reference lookups, all managed by the Python interpreter, making it far slower than a single, contiguous memory copy you might see in a language like C.</p>
+<p>For this large circuit, it’s a heavy operation. If the IR were represented in Rust with a less pointer-heavy structure (like a more flat memory layout), it could be possible to optimize this. But I’m guessing this is complex as long as parts of the IR are still managed as Python objects at a granular level, versus entirely represented in Rust.</p>
+</section>
+<section id="commutative-cancellation" class="level4">
+<h4 class="anchored" data-anchor-id="commutative-cancellation">Commutative Cancellation</h4>
+<p><span class="circle">2</span> is the other heavy pass spot, with two call stacks corresponding to <code>commutative_cancellation</code> which is (unsurprisingly) a Rust-accelerated pass that uses commutation relations to identify cancellation opportunites between gates. I haven’t tried compiling the Rust components of Qiskit with debug symbols to get the locations within the Rust code directly. But for the longer 30ms call (3 samples), 20 ms (2 samples) are taken when releasing memory in <code>free</code>. In the other, 10 ms (1 sample) of the 20ms are spent hashing, which I assume is a lookup for common gate pairs.</p>
+<p>If you look in the time-ordered view you see there are two commutative cancellation pass runs surrounding the minimum point call. Perhaps there could be savings by retaining the analysis or hash lookup across calls.</p>
+<p><img src="https://bachase.github.io/posts/profiling-quantum-compilers-qiskit/commutative_cancel.png" class="img-fluid"></p>
+</section>
+<section id="extra-extra---qiskit-transpiler-profiling" class="level4 page-columns page-full">
+<h4 class="anchored" data-anchor-id="extra-extra---qiskit-transpiler-profiling">Extra Extra - Qiskit Transpiler Profiling</h4>
+<p>Qiskit nicely provides a callback hook to capture the impact of various passes, including time spent on passes. This is a nice domain-specific companion to the general profiling results presented here. Running this <a href="https://github.com/bachase/quantum-compiler-profiling/blob/edebf4b8848321cfaec834226f5e5719d2f2fedc/main.py#L10">extra code</a>, we see <sup>3</sup></p>
+<div class="no-row-height column-margin column-container"><div id="fn3"><p><sup>3</sup>&nbsp;Qiskit has both analysis passes and transformation passes. The former calculates some properties of the DAG, but doesn’t modify it. The latter does modify it. For simplifying this table, I’ve excluded analysis passes as they didn’t have much runtime in this example.</p></div></div><table class="caption-top table">
+<colgroup>
+<col style="width: 45%">
+<col style="width: 16%">
+<col style="width: 10%">
+<col style="width: 12%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Pass</th>
+<th style="text-align: right;">Time (s)</th>
+<th style="text-align: right;">Size</th>
+<th style="text-align: right;">Depth</th>
+<th style="text-align: right;">2Q Gates</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">UnitarySynthesis</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">25100</td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">10050</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">HighLevelSynthesis</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">25100</td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">10050</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BasisTranslator</td>
+<td style="text-align: right;">0.0004</td>
+<td style="text-align: right;">25100</td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">10050</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ElidePermutations</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">25100</td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">10050</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">RemoveDiagonalGatesBeforeMeasure</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">25100</td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">10050</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">RemoveIdentityEquivalent</td>
+<td style="text-align: right;">0.0006</td>
+<td style="text-align: right;"><strong>15380</strong></td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">10050</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">InverseCancellation</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;"><strong>8900</strong></td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;"><strong>3570</strong></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ContractIdleWiresInControlFlow</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">8900</td>
+<td style="text-align: right;">796</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CommutativeCancellation</td>
+<td style="text-align: right;"><strong>0.0118</strong></td>
+<td style="text-align: right;"><strong>7289</strong></td>
+<td style="text-align: right;"><strong>698</strong></td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ConsolidateBlocks</td>
+<td style="text-align: right;">0.0035</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Split2QUnitaries</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">UnitarySynthesis</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">HighLevelSynthesis</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BasisTranslator</td>
+<td style="text-align: right;">0.0006</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">MinimumPoint</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ConsolidateBlocks</td>
+<td style="text-align: right;">0.0035</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">UnitarySynthesis</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">RemoveIdentityEquivalent</td>
+<td style="text-align: right;">0.0001</td>
+<td style="text-align: right;">7289</td>
+<td style="text-align: right;">698</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Optimize1qGatesDecomposition</td>
+<td style="text-align: right;">0.0012</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CommutativeCancellation</td>
+<td style="text-align: right;">0.0056</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ContractIdleWiresInControlFlow</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">MinimumPoint</td>
+<td style="text-align: right;"><strong>0.0483</strong></td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ConsolidateBlocks</td>
+<td style="text-align: right;">0.0035</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">UnitarySynthesis</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">RemoveIdentityEquivalent</td>
+<td style="text-align: right;">0.0001</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Optimize1qGatesDecomposition</td>
+<td style="text-align: right;">0.0012</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CommutativeCancellation</td>
+<td style="text-align: right;">0.0057</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ContractIdleWiresInControlFlow</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">MinimumPoint</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">7189</td>
+<td style="text-align: right;">696</td>
+<td style="text-align: right;">3570</td>
+</tr>
+</tbody>
+</table>
+<p>For each column, rows in <strong>bold</strong> had meaningful time duration or change in circuit metric. The most meaningful passes are</p>
+<section id="removeidentityequivalent" class="level5">
+<h5 class="anchored" data-anchor-id="removeidentityequivalent"><a href="https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.transpiler.passes.RemoveIdentityEquivalent">RemoveIdentityEquivalent</a></h5>
+<p>“Removes gates whose effect is close to an identity operation up to a global phase and up to the specified tolerance.” Looking at the QASM, we can directly see many small angle rotations that are close to identity:</p>
+<pre><code>rz(pi/2097152);
+rz(0) q[14];</code></pre>
+<p>This doesn’t change the depth or the number of two qubit gates, but is quite a lot of single qubit gates!</p>
+</section>
+<section id="inversecancellation" class="level5">
+<h5 class="anchored" data-anchor-id="inversecancellation"><a href="https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.transpiler.passes.InverseCancellation">InverseCancellation</a></h5>
+<p>“Cancel specific Gates which are inverses of each other when they occur back-to-back.” The only reduction in two-qubit gates! Doing nothing is always easier than doing gates that end up doing nothing! After the prior pass, these opportunities are successive cnots on the same qubits:</p>
+<pre><code>cx q[99],q[79];
+cx q[99],q[79];</code></pre>
+</section>
+<section id="commutativecancellation" class="level5">
+<h5 class="anchored" data-anchor-id="commutativecancellation"><a href="https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.transpiler.passes.CommutativeCancellation">CommutativeCancellation</a></h5>
+<p>“Cancel the redundant (self-adjoint) gates through commutation relations.” This is the first reduction in gate depth and comes from being able to push gates around via commutation relations and then cancel them once close together. There’s not a local QASM excerpt to show for this conveniently. But looking at the Rust <a href="https://github.com/Qiskit/qiskit/blob/d595578b62e10f47b6f2515a9cdd687b898ac9e4/crates/transpiler/src/passes/commutation_cancellation.rs">implementation</a>, it looks like this pass treats each qubit as a wire, and then for commuting sets, pushes gates around into a canonical ordering (when they have well defined commutation relations), after which it then combines or cancels gates, replacing with a consolidated gate.</p>
+</section>
+</section>
+</section>
+</section>
+<section id="tldr" class="level2">
+<h2 class="anchored" data-anchor-id="tldr">TL;DR</h2>
+<p>Only a quarter of the runtime was spent in actual transpilation. The rest was in importing Qiskit itself, and parsing the QASM.</p>
+<p>You can see the power of the rust Rewrites in e.g.&nbsp;parsing qasm to bytecode. But you can also see the rewrite in progress, where some overhead going back and forth between Python and Rust, and the Python memory model influencing things like copying a DAG.</p>
+<p>For transpilation, most <em>time</em> was spent copying the Dag once a fixed point was reached on the optimization pass. By looking at Qiskit specific profiling output via a callback, we saw the few passes that had the largest impact on improvements. Most were applying fairly straightforward simplifications – but those have a big impact on the size, depth and ultimate number of two-qubit gates!</p>
+
+
+</section>
+
+
+ ]]></description>
+  <guid>https://bachase.github.io/posts/profiling-quantum-compilers-qiskit/</guid>
+  <pubDate>Wed, 10 Sep 2025 00:00:00 GMT</pubDate>
+</item>
 <item>
   <title>Profiling Quantum Compilers: Introduction</title>
   <link>https://bachase.github.io/posts/profiling-quantum-compilers/</link>
@@ -146,8 +574,8 @@ font-style: inherit;">--</span> python main.py</span></code></pre></div>
 <section id="setup" class="level3 page-columns page-full">
 <h3 class="anchored" data-anchor-id="setup">Setup</h3>
 <p>With that whirlwind tour of profiling behind us, how will we explore quantum compilers? <a href="https://github.com/bachase/quantum-compiler-profiling">https://github.com/bachase/quantum-compiler-profiling</a> is a repository with all you need!</p>
-<p>The code uses a 100-qubit QFT circuit in <a href="https://github.com/unitaryfoundation/ucc-bench"><code>ucc-bench</code></a> (by way of <a href="https://github.com/Qiskit/benchpress">benchpress</a> and <a href="https://github.com/pnnl/QASMBench">QASMBench</a>). The script in <code>main.py</code> then transpiles/compiles this circuit via <a href="https://www.ibm.com/quantum/qiskit">Qiskit</a>, <code>ucc</code>, <a href="https://docs.quantinuum.com/tket/api-docs/index.html">pytket</a>, <a href="https://quantumai.google/cirq">Cirq</a>, or <a href="https://pypi.org/project/pyqpanda3/">pyqpanda3</a>. There’s a corresponding <code>run_bench.sh</code> to run <sup>6</sup> and generate the profiles using <code>py-spy</code>, and there are sub-directories with some profiles checked in. I generated these profiles under a GitHub codespace (which you can do yourself by forking within GitHub). A tad more detail is in the <code>README</code>, but the upshot is we will use speedscope to explore each compiler’s results in the <a href="https://github.com/bachase/quantum-compiler-profiling/tree/main/native.profiles"><code>native.profiles</code></a> directory in future posts.</p>
-<div class="no-row-height column-margin column-container"><div id="fn6"><p><sup>6</sup>&nbsp;Unlike the example in this post, I did not use <code>--function</code> to aggregate samples to start of functions. I might go back and do so, but I don’t a priori know much about each function. Some might be lengthy with lots of loops, so I’d rather keep samples of different lines separate to potentially identify that structure.</p></div></div><p>The QFT circuit was chosen based in recent <code>ucc-bench</code> <a href="https://github.com/unitaryfoundation/ucc-bench/blob/main/results/ucc-benchmarks-8-core-U22.04/compilation_benchmarks/20250819/20250819125708.eca4a630a31567ea794b1e8f90d5038928110223.compilation.csv">performance results</a>:</p>
+<p>The code uses a 100-qubit QFT circuit in <a href="https://github.com/unitaryfoundation/ucc-bench"><code>ucc-bench</code></a> (by way of <a href="https://github.com/Qiskit/benchpress">benchpress</a> and <a href="https://github.com/pnnl/QASMBench">QASMBench</a>). The script in <code>main.py</code> then transpiles/compiles this circuit via <a href="https://www.ibm.com/quantum/qiskit">Qiskit</a>, <a href="https://github.com/unitaryfoundation/ucc"><code>ucc</code></a>, <a href="https://docs.quantinuum.com/tket/api-docs/index.html">pytket</a>, <a href="https://quantumai.google/cirq">Cirq</a>, or <a href="https://pypi.org/project/pyqpanda3/">pyqpanda3</a>. There’s a corresponding <code>run_bench.sh</code> to generate the profiles using <code>py-spy</code>, and there are sub-directories with some profiles checked in<sup>6</sup>. I generated these profiles under a GitHub codespace (which you can do yourself by forking within GitHub). A tad more detail is in the <code>README</code>, but the upshot is we will use speedscope to explore each compiler’s results in the <a href="https://github.com/bachase/quantum-compiler-profiling/tree/main/native.profiles"><code>native.profiles</code></a> directory in future posts.</p>
+<div class="no-row-height column-margin column-container"><div id="fn6"><p><sup>6</sup>&nbsp;I ran profiles with &amp; without <code>--function</code> to aggregate samples to start of functions. I don’t a priori know much about each function. Some might be lengthy with lots of internal loops, so I’d rather keep samples of different lines separate to potentially identify that structure. But having the aggregated view with <code>--function</code> will also help coarse grain over those details when first analyzing results.</p></div></div><p>The QFT circuit was chosen based in recent <code>ucc-bench</code> <a href="https://github.com/unitaryfoundation/ucc-bench/blob/main/results/ucc-benchmarks-8-core-U22.04/compilation_benchmarks/20250819/20250819125708.eca4a630a31567ea794b1e8f90d5038928110223.compilation.csv">performance results</a>:</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 17%">
@@ -203,7 +631,7 @@ font-style: inherit;">--</span> python main.py</span></code></pre></div>
 </tr>
 </tbody>
 </table>
-<p>There is some reduction in two-qubit gates, and the circuit takes a non-trivial amount of compile time. So something interesting is happening!.</p>
+<p>There is some reduction in two-qubit gates, and the circuit takes a non-trivial amount of compile time. So something interesting is happening!</p>
 <p><em>AI Disclaimer</em>: I’ve used LLMs to review and give feedback on this post, but the original content was written by me.</p>
 
 

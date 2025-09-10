@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.7.33">
+<meta name="generator" content="quarto-1.7.34">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -72,10 +72,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-ea385d0e468b0dd5ea5bf0780b1290d9.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-c8ad9e5dbd60b7b70b38521ab19b7da4.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-4df3b0c4fafa0f66eafcead0ee6cff11.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-d68be38d83eca2bb035acf846ffba811.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -176,7 +176,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">August 22, 2025</p>
+      <p class="date-modified">September 8, 2025</p>
     </div>
   </div>
     
@@ -255,8 +255,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="setup" class="level3 page-columns page-full">
 <h3 class="anchored" data-anchor-id="setup">Setup</h3>
 <p>With that whirlwind tour of profiling behind us, how will we explore quantum compilers? <a href="https://github.com/bachase/quantum-compiler-profiling">https://github.com/bachase/quantum-compiler-profiling</a> is a repository with all you need!</p>
-<p>The code uses a 100-qubit QFT circuit in <a href="https://github.com/unitaryfoundation/ucc-bench"><code>ucc-bench</code></a> (by way of <a href="https://github.com/Qiskit/benchpress">benchpress</a> and <a href="https://github.com/pnnl/QASMBench">QASMBench</a>). The script in <code>main.py</code> then transpiles/compiles this circuit via <a href="https://www.ibm.com/quantum/qiskit">Qiskit</a>, <code>ucc</code>, <a href="https://docs.quantinuum.com/tket/api-docs/index.html">pytket</a>, <a href="https://quantumai.google/cirq">Cirq</a>, or <a href="https://pypi.org/project/pyqpanda3/">pyqpanda3</a>. There’s a corresponding <code>run_bench.sh</code> to run <a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> and generate the profiles using <code>py-spy</code>, and there are sub-directories with some profiles checked in. I generated these profiles under a GitHub codespace (which you can do yourself by forking within GitHub). A tad more detail is in the <code>README</code>, but the upshot is we will use speedscope to explore each compiler’s results in the <a href="https://github.com/bachase/quantum-compiler-profiling/tree/main/native.profiles"><code>native.profiles</code></a> directory in future posts.</p>
-<div class="no-row-height column-margin column-container"><div id="fn6"><p><sup>6</sup>&nbsp;Unlike the example in this post, I did not use <code>--function</code> to aggregate samples to start of functions. I might go back and do so, but I don’t a priori know much about each function. Some might be lengthy with lots of loops, so I’d rather keep samples of different lines separate to potentially identify that structure.</p></div></div><p>The QFT circuit was chosen based in recent <code>ucc-bench</code> <a href="https://github.com/unitaryfoundation/ucc-bench/blob/main/results/ucc-benchmarks-8-core-U22.04/compilation_benchmarks/20250819/20250819125708.eca4a630a31567ea794b1e8f90d5038928110223.compilation.csv">performance results</a>:</p>
+<p>The code uses a 100-qubit QFT circuit in <a href="https://github.com/unitaryfoundation/ucc-bench"><code>ucc-bench</code></a> (by way of <a href="https://github.com/Qiskit/benchpress">benchpress</a> and <a href="https://github.com/pnnl/QASMBench">QASMBench</a>). The script in <code>main.py</code> then transpiles/compiles this circuit via <a href="https://www.ibm.com/quantum/qiskit">Qiskit</a>, <a href="https://github.com/unitaryfoundation/ucc"><code>ucc</code></a>, <a href="https://docs.quantinuum.com/tket/api-docs/index.html">pytket</a>, <a href="https://quantumai.google/cirq">Cirq</a>, or <a href="https://pypi.org/project/pyqpanda3/">pyqpanda3</a>. There’s a corresponding <code>run_bench.sh</code> to generate the profiles using <code>py-spy</code>, and there are sub-directories with some profiles checked in<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a>. I generated these profiles under a GitHub codespace (which you can do yourself by forking within GitHub). A tad more detail is in the <code>README</code>, but the upshot is we will use speedscope to explore each compiler’s results in the <a href="https://github.com/bachase/quantum-compiler-profiling/tree/main/native.profiles"><code>native.profiles</code></a> directory in future posts.</p>
+<div class="no-row-height column-margin column-container"><div id="fn6"><p><sup>6</sup>&nbsp;I ran profiles with &amp; without <code>--function</code> to aggregate samples to start of functions. I don’t a priori know much about each function. Some might be lengthy with lots of internal loops, so I’d rather keep samples of different lines separate to potentially identify that structure. But having the aggregated view with <code>--function</code> will also help coarse grain over those details when first analyzing results.</p></div></div><p>The QFT circuit was chosen based in recent <code>ucc-bench</code> <a href="https://github.com/unitaryfoundation/ucc-bench/blob/main/results/ucc-benchmarks-8-core-U22.04/compilation_benchmarks/20250819/20250819125708.eca4a630a31567ea794b1e8f90d5038928110223.compilation.csv">performance results</a>:</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 17%">
@@ -312,7 +312,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
-<p>There is some reduction in two-qubit gates, and the circuit takes a non-trivial amount of compile time. So something interesting is happening!.</p>
+<p>There is some reduction in two-qubit gates, and the circuit takes a non-trivial amount of compile time. So something interesting is happening!</p>
 <p><em>AI Disclaimer</em>: I’ve used LLMs to review and give feedback on this post, but the original content was written by me.</p>
 
 
