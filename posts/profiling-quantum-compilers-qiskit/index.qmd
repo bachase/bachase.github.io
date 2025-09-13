@@ -111,7 +111,7 @@ If you look in the time-ordered view you see there are two commutative cancellat
 #### Extra Extra - Qiskit Transpiler Profiling
 Qiskit nicely provides a callback hook to capture the impact of various passes, including time spent on passes. This is a nice domain-specific companion to the general profiling results presented here. Running this [extra code](https://github.com/bachase/quantum-compiler-profiling/blob/edebf4b8848321cfaec834226f5e5719d2f2fedc/main.py#L10), we see [^which_passes]
 
- Pass                             |   Time (s) |   Size |   Depth |   2Q Gates |
+ Pass                             |   Time (s) |   Size[^size] |   Depth |   2Q Gates |
 |:---------------------------------|-----------:|-------:|--------:|-----------:|
 | UnitarySynthesis                 |     0      |  25100 |     796 |      10050 |
 | HighLevelSynthesis               |     0      |  25100 |     796 |      10050 |
@@ -145,6 +145,8 @@ Qiskit nicely provides a callback hook to capture the impact of various passes, 
 
 [^which_passes]: Qiskit has both analysis passes and transformation passes. The former calculates some properties of the DAG, but doesn't modify it. The latter does modify it. For simplifying this table, I've excluded analysis passes as they didn't have much runtime in this example.
 
+[^size]: Size here is the DAG/circuit [size](https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.dagcircuit.DAGCircuit#size), which is the number of instructions.
+
 For each column, rows in **bold** had meaningful time duration or change in circuit metric. The most meaningful passes are
 
 ##### [RemoveIdentityEquivalent](https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.transpiler.passes.RemoveIdentityEquivalent)
@@ -172,3 +174,7 @@ Only a quarter of the runtime was spent in actual transpilation. The rest was in
 You can see the power of the rust Rewrites in e.g. parsing qasm to bytecode. But you can also see the rewrite in progress, where some overhead going back and forth between Python and Rust, and the Python memory model influencing things like copying a DAG.
 
 For transpilation, most *time* was spent copying the Dag once a fixed point was reached on the optimization pass. By looking at Qiskit specific profiling output via a callback, we saw the few passes that had the largest impact on improvements. Most were applying fairly straightforward simplifications -- but those have a big impact on the size, depth and ultimate number of two-qubit gates!
+
+Thanks to [Nate](https://nates.place/) for feedback on this post.
+
+_AI Disclaimer_: I've used LLMs to review and give feedback on this post, but the original content was written by me.
