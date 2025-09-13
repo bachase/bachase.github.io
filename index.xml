@@ -9,7 +9,7 @@
 <link>https://bachase.github.io/</link>
 <atom:link href="https://bachase.github.io/index.xml" rel="self" type="application/rss+xml"/>
 <description>bachase&#39;s notes on things he&#39;s learning about</description>
-<generator>quarto-1.7.34</generator>
+<generator>quarto-1.8.24</generator>
 <lastBuildDate>Wed, 10 Sep 2025 00:00:00 GMT</lastBuildDate>
 <item>
   <title>Profiling Quantum Compilers: Qiskit</title>
@@ -24,7 +24,7 @@
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
 <p>We begin with a top-level view of the compilation (or transpilation in Qiskit lingo). This took a total of 1.04 seconds. You can inspect this function-aggregated view in speedscope <a href="https://www.speedscope.app/#profileURL=https%3A%2F%2Fraw.githubusercontent.com%2Fbachase%2Fquantum-compiler-profiling%2Frefs%2Fheads%2Fmain%2Fnative.functionagg.profiles%2Fqiskit.profile.json&amp;title=Qiskit%20Profile%20FunctionAgg">here</a>. <img src="https://bachase.github.io/posts/profiling-quantum-compilers-qiskit/qiskit_top_level.png" class="img-fluid"></p>
 <p>I’ve labeled the 3 primary calls within the profiling function</p>
-<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><span class="kw" style="color: #003B4F;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><span class="kw" style="color: #003B4F;
 background-color: null;
 font-weight: bold;
 font-style: inherit;">def</span> run_qiskit(qasm):</span>
@@ -63,7 +63,7 @@ background-color: null;
 font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
 background-color: null;
 font-style: inherit;">3</span></span>
-<span id="cb1-6">    )</span></code></pre></div>
+<span id="cb1-6">    )</span></code></pre></div></div>
 <div class="no-bullets">
 <ul>
 <li><span class="circle">1</span> [39%, 410ms] The call tree starting from <code>_find_and_load</code> importing Qiskit.</li>
@@ -83,7 +83,7 @@ font-style: inherit;">3</span></span>
 <p>Next up is <code>from_qasm_str</code>, which takes 30% of the overall runtime. For this exploration, I switched to the non-function aggregated sampling (speedscope <a href="https://www.speedscope.app/#profileURL=https%3A%2F%2Fraw.githubusercontent.com%2Fbachase%2Fquantum-compiler-profiling%2Frefs%2Fheads%2Fmain%2Fnative.profiles%2Fqiskit.profile.json&amp;title=Qiskit%20Profile">here</a>) because functions like <code>from_bytecode</code> are pretty lengthy. We want to know specifically where inside that function the code is spending time, which is lost with function aggregation. Looking at the sandwich view around <code>from_qasm_str</code> we have some structure</p>
 <p><img src="https://bachase.github.io/posts/profiling-quantum-compilers-qiskit/loads.png" class="img-fluid"></p>
 <p>For <span class="circle">1</span> <code>loads</code> itself is defined in <a href="https://github.com/Qiskit/qiskit/blob/6dd1267466e6effb9b1a60e98ecaae1ac718e5b2/qiskit/qasm2/__init__.py#L578"><code>qasm2/__init__.py</code></a>, reproduced in part here</p>
-<div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><span class="kw" style="color: #003B4F;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><span class="kw" style="color: #003B4F;
 background-color: null;
 font-weight: bold;
 font-style: inherit;">def</span> loads(...):</span>
@@ -97,10 +97,10 @@ background-color: null;
 font-weight: bold;
 font-style: inherit;">return</span> _parse.from_bytecode(</span>
 <span id="cb2-4">        _qasm2.bytecode_from_string(</span>
-<span id="cb2-5">            string,</span></code></pre></div>
+<span id="cb2-5">            string,</span></code></pre></div></div>
 <p><code>_qasm2.bytecode_from_string</code> calls directly into Rust to generate some bytecode representation<sup>1</sup> of the parsed QASM that must be easier to manage, and probably is a simpler post-validated representation. But importantly, that call itself doesn’t show up in any samples, so it must be pretty fast.</p>
 <div class="no-row-height column-margin column-container"><div id="fn1"><p><sup>1</sup>&nbsp;<a href="https://en.wikipedia.org/wiki/Bytecode">Bytecode</a> is an instruction set oriented view of a program that simplifies processing by an interpreter. Python itself compiles your code (at execution time) to bytecode before it is run by the Python interpreter. QASM doesn’t have an official bytecode specification, but converting it to bytecode before interpreting is a good strategy to separate parsing + validation from the downstream use.</p></div></div><p>For <span class="circle">2</span> and <span class="circle">3</span>, the samples we have are all in <code>_parse.from_bytecode</code>, where the bytecode is used to construct the in-memory circuit. The two spots are nearby lines <a href="https://github.com/Qiskit/qiskit/blob/6dd1267466e6effb9b1a60e98ecaae1ac718e5b2/qiskit/qasm2/parse.py#L254">here</a></p>
-<div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><span class="cf" style="color: #003B4F;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><span class="cf" style="color: #003B4F;
 background-color: null;
 font-weight: bold;
 font-style: inherit;">for</span> op <span class="kw" style="color: #003B4F;
@@ -133,7 +133,7 @@ font-style: inherit;">in</span> op_qubits]) <span class="co" style="color: #5E5E
 background-color: null;
 font-style: inherit;"># (3)</span></span>
 <span id="cb3-8">            )</span>
-<span id="cb3-9">    ...</span></code></pre></div>
+<span id="cb3-9">    ...</span></code></pre></div></div>
 <p>Look at the functions called from these lines, that first <code>__init__</code> is the initializer for an <code>Rz</code> gate, <code>_append</code> is adding a newly created gate to <code>QuantumCircuit</code>, and <code>params</code> is both setting and adding a parameter to the quantum instruction representing a gate. Almost all the hex addresses <span class="circle">4</span> are calls inside the CPython/libpython shared object file, but I didn’t have debug symbols around to know what they are. But down in <span class="circle">5</span>, we see calls into the Qiskit Rust code to create the Rust instances of these circuit instructions that are then wrapped in Python. I’m not familiar yet with Qiskit internals, but there will always be some overhead to go back and forth to Rust to create each gate instance.</p>
 <p>I don’t have any deep insights, but am interested to see the parsing performance of other libraries. It’s also interesting to see the mix of Python and Rust in Qiskit, where the initial bytecode parse is super fast, but there is still work to improve the in-memory construction of circuit representations afterwards.</p>
 </section>
@@ -145,7 +145,7 @@ font-style: inherit;"># (3)</span></span>
 <div class="no-row-height column-margin column-container"><div id="fn2"><p><sup>2</sup>&nbsp;Note that the results shown here were sampled at 100 times per second, meaning each sample is 10 milliseconds. This transpile section was ~250ms, so we have 25 samples. The limiting sampling factor was the GitHub workspace machine, which had trouble keeping up at a higher rate (but which I used to get access to native stack trace details). I did run locally with 1000 times per second sampling (but no native symbol support on my Mac), which showed similar time spent in these functions.</p></div></div><section id="minimumpoint" class="level4">
 <h4 class="anchored" data-anchor-id="minimumpoint">MinimumPoint</h4>
 <p><span class="circle">1</span> is part of the <a href="https://github.com/Qiskit/qiskit/blob/6dd1267466e6effb9b1a60e98ecaae1ac718e5b2/qiskit/transpiler/passes/utils/minimum_point.py#L100"><code>MinimumPoint</code></a> transformation pass. This is used by other iterative passes to see if successive runs have improved some circuit metrics. It was hard to infer what these passes were from the sampled callstacks, so I instead put a breakpoint in the debugger to take a peek when the MinimumPoint class was constructed. I walked up the stack to see the passmanager this is part of and found: <img src="https://bachase.github.io/posts/profiling-quantum-compilers-qiskit/optimization_passes.png" class="img-fluid"> So this pass group is running a bunch of optimization passes, and this <code>MinimumPoint</code> class is checking when it’s converged to a local minimum “best” for depth and size. But the heavy part here is all in one line</p>
-<div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><span class="co" style="color: #5E5E5E;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><span class="co" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;"># ...</span></span>
 <span id="cb4-2"><span class="cf" style="color: #003B4F;
@@ -166,7 +166,7 @@ font-style: inherit;">=</span> score</span>
 background-color: null;
 font-style: inherit;">=</span> deepcopy(dag) <span class="co" style="color: #5E5E5E;
 background-color: null;
-font-style: inherit;">#&lt;-- this one</span></span></code></pre></div>
+font-style: inherit;">#&lt;-- this one</span></span></code></pre></div></div>
 <p>Once a better score is reached, a full copy of the entire DAG is captured. You can scroll below in speedscope to see all the calls this results in.</p>
 <p>Given the Python object model, a true independent copy of an object requires copying each internal object as well. This is expensive because Python variables are fundamentally references (pointers) to objects in memory. A simple (or “shallow”) copy of the DAG would just create a new list of pointers to the exact same gate objects. Modifying a gate in the new DAG would also modify it in the old one.</p>
 <p><code>deepcopy</code>, in contrast, must recursively walk the entire object graph—visiting every single gate, parameter, and qubit reference—and create a brand-new, independent Python object for each one. This process involves a massive number of new object allocations and reference lookups, all managed by the Python interpreter, making it far slower than a single, contiguous memory copy you might see in a language like C.</p>
@@ -182,18 +182,11 @@ font-style: inherit;">#&lt;-- this one</span></span></code></pre></div>
 <h4 class="anchored" data-anchor-id="extra-extra---qiskit-transpiler-profiling">Extra Extra - Qiskit Transpiler Profiling</h4>
 <p>Qiskit nicely provides a callback hook to capture the impact of various passes, including time spent on passes. This is a nice domain-specific companion to the general profiling results presented here. Running this <a href="https://github.com/bachase/quantum-compiler-profiling/blob/edebf4b8848321cfaec834226f5e5719d2f2fedc/main.py#L10">extra code</a>, we see <sup>3</sup></p>
 <div class="no-row-height column-margin column-container"><div id="fn3"><p><sup>3</sup>&nbsp;Qiskit has both analysis passes and transformation passes. The former calculates some properties of the DAG, but doesn’t modify it. The latter does modify it. For simplifying this table, I’ve excluded analysis passes as they didn’t have much runtime in this example.</p></div></div><table class="caption-top table">
-<colgroup>
-<col style="width: 45%">
-<col style="width: 16%">
-<col style="width: 10%">
-<col style="width: 12%">
-<col style="width: 16%">
-</colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">Pass</th>
 <th style="text-align: right;">Time (s)</th>
-<th style="text-align: right;">Size</th>
+<th style="text-align: right;">Size<sup>4</sup></th>
 <th style="text-align: right;">Depth</th>
 <th style="text-align: right;">2Q Gates</th>
 </tr>
@@ -404,7 +397,7 @@ font-style: inherit;">#&lt;-- this one</span></span></code></pre></div>
 </tr>
 </tbody>
 </table>
-<p>For each column, rows in <strong>bold</strong> had meaningful time duration or change in circuit metric. The most meaningful passes are</p>
+<div class="no-row-height column-margin column-container"><div id="fn4"><p><sup>4</sup>&nbsp;Size here is the DAG/circuit <a href="https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.dagcircuit.DAGCircuit#size">size</a>, which is the number of instructions.</p></div></div><p>For each column, rows in <strong>bold</strong> had meaningful time duration or change in circuit metric. The most meaningful passes are</p>
 <section id="removeidentityequivalent" class="level5">
 <h5 class="anchored" data-anchor-id="removeidentityequivalent"><a href="https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.transpiler.passes.RemoveIdentityEquivalent">RemoveIdentityEquivalent</a></h5>
 <p>“Removes gates whose effect is close to an identity operation up to a global phase and up to the specified tolerance.” Looking at the QASM, we can directly see many small angle rotations that are close to identity:</p>
@@ -430,6 +423,8 @@ cx q[99],q[79];</code></pre>
 <p>Only a quarter of the runtime was spent in actual transpilation. The rest was in importing Qiskit itself, and parsing the QASM.</p>
 <p>You can see the power of the rust Rewrites in e.g.&nbsp;parsing qasm to bytecode. But you can also see the rewrite in progress, where some overhead going back and forth between Python and Rust, and the Python memory model influencing things like copying a DAG.</p>
 <p>For transpilation, most <em>time</em> was spent copying the Dag once a fixed point was reached on the optimization pass. By looking at Qiskit specific profiling output via a callback, we saw the few passes that had the largest impact on improvements. Most were applying fairly straightforward simplifications – but those have a big impact on the size, depth and ultimate number of two-qubit gates!</p>
+<p>Thanks to <a href="https://nates.place/">Nate</a> for feedback on this post.</p>
+<p><em>AI Disclaimer</em>: I’ve used LLMs to review and give feedback on this post, but the original content was written by me.</p>
 
 
 </section>
@@ -461,7 +456,7 @@ cx q[99],q[79];</code></pre>
 <h4 class="anchored" data-anchor-id="an-example">An example</h4>
 <p>Let’s look at an example adapted from a <a href="https://yosefk.com/blog/how-profilers-lie-the-cases-of-gprof-and-kcachegrind.html">classic post</a> on how profilers can be misleading. Turns out modern sampling profilers like <code>py-spy</code> handle the issue in that post, but its a good way to explore the visualizations <code>py-spy</code> generates.</p>
 <p>Consider this Python script</p>
-<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><span class="kw" style="color: #003B4F;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><span class="kw" style="color: #003B4F;
 background-color: null;
 font-weight: bold;
 font-style: inherit;">def</span> work(n):</span>
@@ -530,10 +525,10 @@ background-color: null;
 font-style: inherit;">==</span> <span class="st" style="color: #20794D;
 background-color: null;
 font-style: inherit;">"__main__"</span>:</span>
-<span id="cb1-21">    main()</span></code></pre></div>
+<span id="cb1-21">    main()</span></code></pre></div></div>
 <p>In this code, both <code>easy_task()</code> and <code>hard_task()</code> call the same function, <code>work()</code>, but with vastly different workloads. A simpler profiler that only tracks how much time is spent on specific lines of code would just tell us <code>work()</code> is slow, but not why. A sampling profiler like <code>py-spy</code>, by virtue of collecting the entire call stacks, tells us both where the program is but also how it got there. This means it can distinguish call paths that get to <code>work()</code>, differentiating calls that come by way of <code>easy_task()</code> vs <code>hard_task()</code>.</p>
 <p>Let’s see this in action. Assuming the above is saved to a <code>main.py</code>, you would run<sup>3</sup> the command below for a few seconds and then kill the process:</p>
-<div class="no-row-height column-margin column-container"><div id="fn3"><p><sup>3</sup>&nbsp;On my mac, I need to run this as <code>sudo</code> for <code>py-spy</code> to be able to introspect the running process. I didn’t use <code>--native</code> since this is pure python.</p></div></div><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><span class="ex" style="color: null;
+<div class="no-row-height column-margin column-container"><div id="fn3"><p><sup>3</sup>&nbsp;On my mac, I need to run this as <code>sudo</code> for <code>py-spy</code> to be able to introspect the running process. I didn’t use <code>--native</code> since this is pure python.</p></div></div><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><span class="ex" style="color: null;
 background-color: null;
 font-style: inherit;">$</span>  py-spy record <span class="at" style="color: #657422;
 background-color: null;
@@ -543,7 +538,7 @@ font-style: inherit;">-o</span> profile.json <span class="at" style="color: #657
 background-color: null;
 font-style: inherit;">--function</span> <span class="at" style="color: #657422;
 background-color: null;
-font-style: inherit;">--</span> python main.py</span></code></pre></div>
+font-style: inherit;">--</span> python main.py</span></code></pre></div></div>
 <p>Here, we tell <code>py-spy</code> to record a profile of <code>python main.py</code> and save it to the file <code>profile.json</code><sup>4</sup>. It uses the <code>speedscope</code> format, which you can upload to <a href="http://speedscope.app/">http://speedscope.app/</a> to visualize.</p>
 <div class="no-row-height column-margin column-container"><div id="fn4"><p><sup>4</sup>&nbsp;I also passed <code>--function</code> to aggregate samples by the first line number of a function versus the sampled number. This way whether the sample is taken when we are at the <code>i+=1</code> or the <code>while i &lt;n:</code> line in <code>work()</code>, the profile result groups them together. If we didn’t do this, the visualization would end up creating an entry for each distinct line-number of <code>work()</code> sampled and make it harder to analyze the charts.</p></div></div><p>Let’s walk through the speedscope <a href="https://www.speedscope.app/#profileURL=https%3A%2F%2Fbachase.github.io%2Fposts%2Fprofiling-quantum-compilers%2Fprofile.json&amp;title=Example%20Profile">view</a> of these results:</p>
 <section id="time-order-view" class="level5 page-columns page-full">
