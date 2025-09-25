@@ -4,7 +4,7 @@ date: 2025-09-10
 #date-modified: 2025-09-08
 ---
 
-This post is the first follow-up in the quantum compiler profiling [series](posts/profiling-quantum-compilers/), focusing on Qiskit version 2.1.1. Let's dive right in!
+This post is the first follow-up in the quantum compiler profiling [series](/posts/profiling-quantum-compilers/), focusing on Qiskit version 2.1.1. Let's dive right in!
 
 ## Overview
 We begin with a top-level view of the compilation (or transpilation in Qiskit lingo). This took a total of 1.04 seconds. You can inspect this function-aggregated view in speedscope [here](https://www.speedscope.app/#profileURL=https%3A%2F%2Fraw.githubusercontent.com%2Fbachase%2Fquantum-compiler-profiling%2Frefs%2Fheads%2Fmain%2Fnative.functionagg.profiles%2Fqiskit.profile.json&title=Qiskit%20Profile%20FunctionAgg).
