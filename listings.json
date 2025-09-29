@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/profiling-quantum-compilers-pytket/index.html",
       "/posts/profiling-quantum-compilers-qiskit/index.html",
       "/posts/profiling-quantum-compilers/index.html"
     ]

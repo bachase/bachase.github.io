@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2025-09-29">
+
+<title>Profiling Quantum Compilers: pytket – bachase notes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-0b37c64f34216b628666a8dac638b53b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">bachase notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/bachase"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="../../index.xml"> <i class="bi bi-rss" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
+    </div>
+<!-- main -->
+<main class="content page-columns page-full" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Profiling Quantum Compilers: pytket</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 29, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>For the next post in the quantum compiler profiling <a href="../../posts/profiling-quantum-compilers/">series</a>, we will focus on pytket version 2.9.1. <a href="https://docs.quantinuum.com/tket/api-docs/index.html">pytket</a> is “a python module for interfacing with tket, a quantum computing toolkit and optimising compiler developed by <a href="https://www.quantinuum.com/">Quantinuum</a>.” At the time of writing, Quantinuum just released their next generation quantum software stack, which includes <a href="https://github.com/CQCL/tket2">tket2</a>. But it’s still a work in progress, so for now, I will focus on the existing version.</p>
+<section id="overview" class="level2 page-columns page-full">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>As we did <a href="../../posts/profiling-quantum-compilers-qiskit">last time</a>, we begin with a top-level view of the compilation. This took a total of 1 minute and 10 seconds. You can inspect this function-aggregated view in speedscope <a href="https://www.speedscope.app/#profileURL=https%3A%2F%2Fraw.githubusercontent.com%2Fbachase%2Fquantum-compiler-profiling%2Frefs%2Fheads%2Fmain%2Fnative.functionagg.profiles%2Fpytket.profile.json&amp;title=Pytket%20Profile%20FunctionAgg">here</a>.</p>
+<p><img src="./pytket_overview.png" class="img-fluid"></p>
+<p>The benchmark harness code is below, with the code annotated with the labels in the image above. <a id="pytket-python-wrapper"></a></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_pytket(qasm):                                               <span class="co">#(1)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="im">from</span> pytket.passes <span class="im">import</span> (</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>        SequencePass,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>        AutoRebase,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        FullPeepholeOptimise,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="im">from</span> pytket.predicates <span class="im">import</span> CompilationUnit</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="im">from</span> pytket.circuit <span class="im">import</span> OpType</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="im">from</span> pytket.qasm <span class="im">import</span> circuit_from_qasm_str</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    compilation_unit <span class="op">=</span> CompilationUnit(circuit_from_qasm_str(qasm)) <span class="co">#(2)</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    passes <span class="op">=</span> [</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        FullPeepholeOptimise(),</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        AutoRebase({OpType.Rx, OpType.Ry, OpType.Rz, OpType.CX, OpType.H}),</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    SequencePass(passes).<span class="bu">apply</span>(compilation_unit)                    <span class="co">#(3)</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> compilation_unit.circuit</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The bulk of the time is in two spots:</p>
+<div class="no-bullets">
+<ul>
+<li><span class="circle">2</span> [2%, 1.99s] in <code>circuit_from_qasm_str</code> parsing the 25K line QASM file into pytket’s in-memory circuit representation.</li>
+<li><span class="circle">3</span> [96%, 1m 8s] in <code>apply</code> actually optimizing the circuit.</li>
+</ul>
+</div>
+<p>Not visible is the python import time, which at 320ms was less than half a percent of the runtime, but on the same order that Qiskit spends on imports.</p>
+<section id="parsing-qasm" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="parsing-qasm">Parsing QASM</h3>
+<p>Although a small fraction of the overall runtime, I am curious to explore how tket is parsing QASM and how that compares to other libraries. Zooming in on that segment in the timeline view:</p>
+<p><img src="pytket_from_json.png" class="img-fluid"></p>
+<p>At the highest-level, <span class="circle">1</span> is the <code>circuit_from_qasm_str</code> <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/pytket/pytket/qasm/qasm.py#L995">function</a> in pytket, reproduced here:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> circuit_from_qasm_str(qasm_str: <span class="bu">str</span>, maxwidth: <span class="bu">int</span> <span class="op">=</span> <span class="dv">32</span>) <span class="op">-&gt;</span> Circuit: <span class="co"># (1)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">global</span> g_parser  <span class="co"># noqa: PLW0602</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    ...</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">#                 (3)             (2)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">#                  ^               ^</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    circ <span class="op">=</span> Circuit.from_dict(g_parser.parse(qasm_str))</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    cpass <span class="op">=</span> scratch_reg_resize_pass(maxwidth) <span class="co"># &lt;-- (4)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    cpass.<span class="bu">apply</span>(circ)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> circ</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Here, <code>g_parser</code> is an instance of a <a href="https://github.com/lark-parser/lark">lark</a> parser. Lark is pure-python parser library. The grammar<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> for QASM2 parsing in pytket is <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/pytket/pytket/qasm/grammar.py">here</a>. What is most interesting is <em>what</em> representation tket parses into. The <code>g_parser.parse</code> method at <span class="circle">2</span> takes in a QASM string and returns a python dict that is effectively JSON. Tket has a JSON <a href="https://docs.quantinuum.com/tket/user-guide/manual/manual_circuit.html#importing-exporting-circuits">format for circuits</a> that is uses for serialization. For the QFT circuit we are compiling, this is (mostly) a series of commands, but not at all compact (repeating keys, numeric params as strings); an excerpt:</p>
+<div class="no-row-height column-margin column-container"><div id="fn1"><p><sup>1</sup>&nbsp;Lark is also used in QuEra’s Bloqade circuit dialect for <a href="https://github.com/QuEraComputing/bloqade-circuit/blob/main/src/bloqade/qasm2/parse/qasm2.lark">parsing qasm</a>.</p></div></div><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span><span class="dt">"commands"</span><span class="fu">:</span><span class="ot">[</span><span class="fu">{</span><span class="dt">"args"</span><span class="fu">:</span><span class="ot">[[</span><span class="st">"q"</span><span class="ot">,[</span><span class="dv">99</span><span class="ot">]]]</span><span class="fu">,</span><span class="dt">"op"</span><span class="fu">:{</span><span class="dt">"type"</span><span class="fu">:</span><span class="st">"Ry"</span><span class="fu">,</span><span class="dt">"params"</span><span class="fu">:</span><span class="ot">[</span><span class="st">"((pi / 2))/pi"</span><span class="ot">]</span><span class="fu">}}</span><span class="ot">,</span><span class="fu">{</span><span class="dt">"args"</span><span class="fu">:</span><span class="ot">[[</span><span class="st">"q"</span><span class="ot">,[</span><span class="dv">99</span><span class="ot">]]]</span><span class="fu">,</span><span class="dt">"op"</span><span class="fu">:{</span><span class="dt">"type"</span><span class="fu">:</span><span class="st">"Rx"</span><span class="fu">,</span><span class="dt">"params"</span><span class="fu">:</span><span class="ot">[</span><span class="st">"(pi)/pi"</span><span class="ot">]</span><span class="fu">}}</span><span class="ot">,</span><span class="fu">{</span><span class="dt">"args"</span><span class="fu">:</span><span class="ot">[[</span><span class="st">"q"</span><span class="ot">,[</span><span class="dv">99</span><span class="ot">]]]</span><span class="fu">,</span><span class="dt">"op"</span><span class="fu">:{</span><span class="dt">"type"</span><span class="fu">:</span><span class="st">"Rz"</span><span class="fu">,</span><span class="dt">"params"</span><span class="fu">:</span><span class="ot">[</span><span class="st">"((pi / 4))/pi"</span><span class="ot">]</span><span class="fu">}}</span><span class="ot">,</span><span class="fu">{</span><span class="dt">"args"</span><span class="fu">:</span><span class="ot">[[</span><span class="st">"q"</span><span class="ot">,[</span><span class="dv">99</span><span class="ot">]],[</span><span class="st">"q"</span><span class="ot">,[</span><span class="dv">98</span><span class="ot">]]]</span><span class="fu">,</span><span class="dt">"op"</span><span class="fu">:{</span><span class="dt">"type"</span><span class="fu">:</span><span class="st">"CX"</span><span class="fu">}}</span><span class="ot">,</span><span class="fu">{</span><span class="dt">"args"</span><span class="fu">:</span><span class="ot">[[</span><span class="st">"q"</span><span class="ot">,[</span><span class="dv">98</span><span class="ot">]]]</span><span class="fu">,</span><span class="dt">"op"</span><span class="fu">:{</span><span class="dt">"type"</span><span class="fu">:</span><span class="st">"Rz"</span><span class="fu">,</span><span class="dt">"params"</span><span class="fu">:</span><span class="ot">[</span><span class="st">"(((-pi) / 4))/pi"</span><span class="ot">]</span><span class="fu">}}</span><span class="ot">,</span><span class="er">....</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>As a result, what started as 427 kilobyte QASM file expands to 8.6 megabyte JSON blob!</p>
+<p>In <span class="circle">3</span>, the <code>Circuit.from_dict</code> call converts the python dictionary to a JSON string (again overhead!) and ultimately <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Circuit/CircuitJson.cpp#L49">parses it</a> into the in-memory circuit representation. Even though these layers are in C++, there’s just a lot of overhead parsing all those strings (and I imagine was a partial motivation for <a href="https://github.com/unitaryfoundation/jeff">Jeff</a>).</p>
+<p>Lastly, in <span class="circle">4</span>, there is a <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/pytket/pytket/passes/resizeregpass.py#L45">pass</a> to ensure all classical registers bit width is below a desired target. I’m guessing this is to better map to hardware, e.g.&nbsp;64-bit classical registers make sense, 774-bit registers don’t.</p>
+<p>The take-away I have here is that even transient intermediary representations that might make sense as small scale/for human use (JSON) end up with performance implications at relatively modest scales.</p>
+</section>
+<section id="compiling" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="compiling">Compiling</h3>
+<p>Onwards to the fun stuff.</p>
+<p><img src="pytket_sequence_pass.png" class="img-fluid"></p>
+<p>To understand the profile, let’s look back at <a href="#pytket-python-wrapper">benchmark harness code</a>. This uses two passes from <code>pytket</code></p>
+<div class="no-bullets page-columns page-full">
+<ul>
+<li><span class="circle">1</span> <a href="https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.FullPeepholeOptimise"><code>FullPeepholeOptimize</code></a> “pass applies Clifford simplifications, commutes single-qubit gates to the front of the circuit and applies passes to squash subcircuits of up to three qubits. This provides a one-size-approximately-fits-all “kitchen sink” solution to Circuit optimisation.” (from <a href="https://docs.quantinuum.com/tket/user-guide/manual/manual_compiler.html#predefined-sequences">docs</a>). <a href="https://en.wikipedia.org/wiki/Peephole_optimization">Peephole optimization</a> is a concept from classical compilers, where you look at small program segments (like looking through a peephole) and locally optimize them. <a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></li>
+<li><span class="circle">2</span> <code>AutoRebase</code> converts to the target gateset we use in the benchmarks to ensure an apples-to-apples comparison. Note this only took 200ms, so isn’t actually visible on the image above. But I put the label where you’d end up finding it by zooming or Ctrl+F searching for “rebase”.</li>
+</ul>
+<div class="no-row-height column-margin column-container"><div id="fn2"><p><sup>2</sup>&nbsp;I suspect the debug symbols get a little messed up, as <code>full_peephole_optimise</code> does show up as 30ms of the call stack, but there are seconds of samples in the underlying passes that I see it calling from the source code. I don’t feel like building locally with full debug symbols, so assuming things map back as you’d expect.</p></div></div></div>
+<section id="full-peephole-optimize" class="level4 page-columns page-full">
+<h4 class="anchored" data-anchor-id="full-peephole-optimize">Full Peephole Optimize</h4>
+<p>Fortunately, there’s a nice <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Transformations/OptimisationPass.cpp#L48">single spot</a> in the C++ source that shows what internal passes full peephole optimization uses. Reproducing here</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>Transform full_peephole_optimise<span class="op">(</span><span class="dt">bool</span> allow_swaps<span class="op">,</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>                                OpType target_2qb_gate<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">switch</span> <span class="op">(</span>target_2qb_gate<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> OpType<span class="op">::</span>CX<span class="op">:</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> <span class="op">(</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>          synthesise_tket<span class="op">()</span> <span class="op">&gt;&gt;</span> two_qubit_squash<span class="op">(</span><span class="kw">false</span><span class="op">)</span> <span class="op">&gt;&gt;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>          clifford_simp<span class="op">(</span>allow_swaps<span class="op">)</span> <span class="op">&gt;&gt;</span> synthesise_tket<span class="op">()</span> <span class="op">&gt;&gt;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>          two_qubit_squash<span class="op">(</span>allow_swaps<span class="op">)</span> <span class="op">&gt;&gt;</span> three_qubit_squash<span class="op">()</span> <span class="op">&gt;&gt;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>          clifford_simp<span class="op">(</span>allow_swaps<span class="op">)</span> <span class="op">&gt;&gt;</span> synthesise_tket<span class="op">());</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* snip */</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>By switching to the left-heavy <a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> view, we see <code>three_qubit_squash</code> <span class="circle">1</span> is by far the longest running at 52 seconds. The mouse-overed <code>two_qubit_swash</code> <span class="circle">2</span> (which is called twice) runs for 4.5 seconds.</p>
+<div class="no-row-height column-margin column-container"><div id="fn3"><p><sup>3</sup>&nbsp;Recall, the left-heavy view is not time-ordered, and insteads pushes the longer running segments of the sampled call stack to the left of the chart.</p></div></div><p><img src="pytket_full_peephole.png" class="img-fluid"></p>
+<p>Focusing on <code>three_qubit_squash</code>, it is defined <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Transformations/ThreeQubitSquash.cpp#L311">here</a> in C++, and is also documented as a <a href="https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.ThreeQubitSquash">standalone pass</a></p>
+<blockquote class="blockquote">
+<p>Squash three-qubit subcircuits into subcircuits having fewer CX gates, when possible, and apply Clifford simplification.</p>
+</blockquote>
+<p>Looking at the C++ code, it assumes all quantum operations in the circuit are single qubit or CNOT gates. It uses <code>QISystem</code> to track sets of 3-qubit interactions (represented by <code>QInteraction</code>). The pass walks the DAG representation of the circuit in topological order. For each quantum operation, it checks if it overlaps with an existing set of 3-qubit interactions. If so, it combines with them. If its a fresh interaction independent of any prior ones, it starts a new <code>QInteraction</code>. Otherwise, its an operation that would cause an existing <code>QInteraction</code> to exceed 3-qubits (so overlaps with say 1 of the existing 3 qubits). In this cases, it “closes” the interaction, taking the set of gates that had been combined to this interaction and replacing with an equivalent unitary <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Transformations/ThreeQubitSquash.cpp#L109">decomposed</a> to a canonical sequence of a few gates. So in short, contiguous runs of 3-qubit interactions get decomposed to a few gates. This is an interesting comparison to what we saw in the <a href="../../posts/profiling-quantum-compilers-qiskit">Qiskit post</a>, where things like commutative cancellation/re-ordering via algebraic gate identities was the strategy. This <code>pytket</code> pass is more like a synthesis approach.</p>
+<p>The <code>close_interaction</code> function doing that synthesis dominates the runtime. From there, time is spent in <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Circuit/ThreeQubitConversion.cpp#L436"><code>three_qubit_synthesis</code></a> (20%) which does a numerical decomposition of three qubit gates and <code>singleq_clifford_sweep()</code> (40%) (care of <code>clifford_simp</code>) which leverages Clifford gate rules to simplify.</p>
+<p>My only observation poking around this area is a few lengthy calls to <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Transformations/PQPSquash.cpp#L64"><code>PQPSquasher::flush</code></a>. The <code>PQPSquasher</code> class “squashes chains of single qubit gates to minimal sequences of any two type of rotations (Rx, Ry or Rz), using Euler angle decompositions” (from <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/include/tket/Transformations/PQPSquash.hpp#L28">here</a>). Searching for this in the Sandwhich view of speedscope, I see 15 seconds of CPU time (22% of the entire runtime) here, even though only 110 ms of self-time in that function.</p>
+<p><img src="pqp_flush.png" class="img-fluid"></p>
+<p>Further poking in the Callee side of the Sandwich view, I see a bunch of <code>SymEngine::</code> functions, which is a <a href="https://symengine.org/">third-party library</a> for symbolic mathematics, that can be used as a backend for Sympy. For this context, it shows up when merging rotations in the <code>PQPSquasher</code> class (see <code>total_angle</code> in <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Transformations/PQPSquash.cpp#L168"><code>merge_rotations</code></a>). I’m not going to dig much futher, but I’m not suprised there is some overhead for doing symbolic level mathematics. I don’t know if there is any caching or other performance optimization strategies with SymEngine. Perhaps there is a way to disable and switch to floating point calculations instead of that is sufficient for your use case. But it is interesting to the circuits Qiskit and tket generate:</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">tket</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">qiskit</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<pre><code>rz(3.998046875*pi) q[91];
+cx q[98],q[92];
+rz(0.015625*pi) q[93];
+cx q[97],q[94];
+rz(3.75*pi) q[95];
+cx q[99],q[91];
+rz(3.9921875*pi) q[92];
+cx q[97],q[93];
+rz(0.0625*pi) q[94];
+cx q[96],q[95];</code></pre>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<pre><code>cx q[93],q[92];
+rz(-3*pi/4) q[92];
+ry(pi/2) q[92];
+rz(1.5707933307386703) q[92];
+cx q[99],q[91];
+rz(-pi/512) q[91];
+cx q[99],q[91];
+rz(pi/512) q[91];
+cx q[98],q[91];
+rz(-pi/256) q[91];
+</code></pre>
+</div>
+</div>
+</div>
+<p>Above are random exceprts of in the middle of the compiled QFT circuit (exported to QASM). Both have single qubit rotation angles that are multiple of <code>pi</code>, but qiskit lagely keeps them as simple fractions (but not all!). tket has them as some floating point multiple of <code>pi</code>. So <code>qiskit</code> must have an faster internal representation that is either symbolic or tracks the fraction representation relative to <code>pi</code>.</p>
+</section>
+</section>
+<section id="a-final-bottoms-up-view" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="a-final-bottoms-up-view">A final Bottoms up view</h3>
+<p>One last note on <code>tket</code>, check out the bottom’s up view sorted by self-time</p>
+<p><img src="./pytket_memory.png" class="img-fluid"></p>
+<p>A little over 7 seconds is spent allocating and freeing memory and this is largely in C++ code. This is just a reminder that just using a compiled language is not a guarantee of speed. How you organize your data and use memory has a big impact<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>.</p>
+<div class="no-row-height column-margin column-container"><div id="fn4"><p><sup>4</sup>&nbsp;One drive-by thing I noticed was a use of <code>std::list</code> in the <code>PQPSquash</code> code <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Transformations/PQPSquash.cpp#L83">here</a>. <code>std::list</code> is a linked list, so each item is a new memory allocation. Although the code does rely on re-ordering/removing elements in the list, I bet a flat memory structure like <code>std::vector</code> wouldn’t be too hard and could perform much better.</p></div></div></section>
+</section>
+<section id="tldr" class="level2">
+<h2 class="anchored" data-anchor-id="tldr">TL;DR</h2>
+<p>The vast majority of the runtime was spent in the <code>FullPeepholeOptimise</code> pass, particularly within the <code>three_qubit_squash</code> routine. This pass identifies contiguous blocks of 3-qubit interactions and re-synthesizes them into a more optimal gate sequence. A significant portion of this synthesis time is spent in symbolic math routines for simplifying single-qubit rotations.</p>
+<p>Also of note is a 20x size overhead in parsing QASM; the 427 KB input file is first converted into an 8.6 MB JSON representation before being loaded into the final in-memory circuit.</p>
+<p>I’m looking forward to seeing what <code>tket2</code> does to improve on these areas!</p>
+<p><em>AI Disclaimer</em>: I’ve used LLMs to review and give feedback on this post, but the original content was written by me.</p>
+
+
+</section>
+
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/bachase\.github\.io");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

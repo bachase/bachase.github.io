@@ -10,7 +10,532 @@
 <atom:link href="https://bachase.github.io/index.xml" rel="self" type="application/rss+xml"/>
 <description>bachase&#39;s notes on things he&#39;s learning about</description>
 <generator>quarto-1.8.24</generator>
-<lastBuildDate>Wed, 10 Sep 2025 00:00:00 GMT</lastBuildDate>
+<lastBuildDate>Mon, 29 Sep 2025 00:00:00 GMT</lastBuildDate>
+<item>
+  <title>Profiling Quantum Compilers: pytket</title>
+  <link>https://bachase.github.io/posts/profiling-quantum-compilers-pytket/</link>
+  <description><![CDATA[ 
+
+
+
+
+<p>For the next post in the quantum compiler profiling <a href="../../posts/profiling-quantum-compilers/">series</a>, we will focus on pytket version 2.9.1. <a href="https://docs.quantinuum.com/tket/api-docs/index.html">pytket</a> is “a python module for interfacing with tket, a quantum computing toolkit and optimising compiler developed by <a href="https://www.quantinuum.com/">Quantinuum</a>.” At the time of writing, Quantinuum just released their next generation quantum software stack, which includes <a href="https://github.com/CQCL/tket2">tket2</a>. But it’s still a work in progress, so for now, I will focus on the existing version.</p>
+<section id="overview" class="level2 page-columns page-full">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>As we did <a href="../../posts/profiling-quantum-compilers-qiskit">last time</a>, we begin with a top-level view of the compilation. This took a total of 1 minute and 10 seconds. You can inspect this function-aggregated view in speedscope <a href="https://www.speedscope.app/#profileURL=https%3A%2F%2Fraw.githubusercontent.com%2Fbachase%2Fquantum-compiler-profiling%2Frefs%2Fheads%2Fmain%2Fnative.functionagg.profiles%2Fpytket.profile.json&amp;title=Pytket%20Profile%20FunctionAgg">here</a>.</p>
+<p><img src="https://bachase.github.io/posts/profiling-quantum-compilers-pytket/pytket_overview.png" class="img-fluid"></p>
+<p>The benchmark harness code is below, with the code annotated with the labels in the image above. <a id="pytket-python-wrapper"></a></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> run_pytket(qasm):                                               <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#(1)</span></span>
+<span id="cb1-2">    <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> pytket.passes <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> (</span>
+<span id="cb1-3">        SequencePass,</span>
+<span id="cb1-4">        AutoRebase,</span>
+<span id="cb1-5">        FullPeepholeOptimise,</span>
+<span id="cb1-6">    )</span>
+<span id="cb1-7">    <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> pytket.predicates <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> CompilationUnit</span>
+<span id="cb1-8">    <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> pytket.circuit <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> OpType</span>
+<span id="cb1-9">    <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> pytket.qasm <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> circuit_from_qasm_str</span>
+<span id="cb1-10"></span>
+<span id="cb1-11">    compilation_unit <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> CompilationUnit(circuit_from_qasm_str(qasm)) <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#(2)</span></span>
+<span id="cb1-12">    passes <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> [</span>
+<span id="cb1-13">        FullPeepholeOptimise(),</span>
+<span id="cb1-14">        AutoRebase({OpType.Rx, OpType.Ry, OpType.Rz, OpType.CX, OpType.H}),</span>
+<span id="cb1-15">    ]</span>
+<span id="cb1-16">    SequencePass(passes).<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">apply</span>(compilation_unit)                    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#(3)</span></span>
+<span id="cb1-17">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> compilation_unit.circuit</span></code></pre></div></div>
+<p>The bulk of the time is in two spots:</p>
+<div class="no-bullets">
+<ul>
+<li><span class="circle">2</span> [2%, 1.99s] in <code>circuit_from_qasm_str</code> parsing the 25K line QASM file into pytket’s in-memory circuit representation.</li>
+<li><span class="circle">3</span> [96%, 1m 8s] in <code>apply</code> actually optimizing the circuit.</li>
+</ul>
+</div>
+<p>Not visible is the python import time, which at 320ms was less than half a percent of the runtime, but on the same order that Qiskit spends on imports.</p>
+<section id="parsing-qasm" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="parsing-qasm">Parsing QASM</h3>
+<p>Although a small fraction of the overall runtime, I am curious to explore how tket is parsing QASM and how that compares to other libraries. Zooming in on that segment in the timeline view:</p>
+<p><img src="https://bachase.github.io/posts/profiling-quantum-compilers-pytket/pytket_from_json.png" class="img-fluid"></p>
+<p>At the highest-level, <span class="circle">1</span> is the <code>circuit_from_qasm_str</code> <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/pytket/pytket/qasm/qasm.py#L995">function</a> in pytket, reproduced here:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> circuit_from_qasm_str(qasm_str: <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">str</span>, maxwidth: <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">int</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">32</span>) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-&gt;</span> Circuit: <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># (1)</span></span>
+<span id="cb2-2">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">global</span> g_parser  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># noqa: PLW0602</span></span>
+<span id="cb2-3">    ...</span>
+<span id="cb2-4">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#                 (3)             (2)</span></span>
+<span id="cb2-5">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#                  ^               ^</span></span>
+<span id="cb2-6">    circ <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> Circuit.from_dict(g_parser.parse(qasm_str))</span>
+<span id="cb2-7">    cpass <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> scratch_reg_resize_pass(maxwidth) <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># &lt;-- (4)</span></span>
+<span id="cb2-8">    cpass.<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">apply</span>(circ)</span>
+<span id="cb2-9">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> circ</span></code></pre></div></div>
+<p>Here, <code>g_parser</code> is an instance of a <a href="https://github.com/lark-parser/lark">lark</a> parser. Lark is pure-python parser library. The grammar<sup>1</sup> for QASM2 parsing in pytket is <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/pytket/pytket/qasm/grammar.py">here</a>. What is most interesting is <em>what</em> representation tket parses into. The <code>g_parser.parse</code> method at <span class="circle">2</span> takes in a QASM string and returns a python dict that is effectively JSON. Tket has a JSON <a href="https://docs.quantinuum.com/tket/user-guide/manual/manual_circuit.html#importing-exporting-circuits">format for circuits</a> that is uses for serialization. For the QFT circuit we are compiling, this is (mostly) a series of commands, but not at all compact (repeating keys, numeric params as strings); an excerpt:</p>
+<div class="no-row-height column-margin column-container"><div id="fn1"><p><sup>1</sup>&nbsp;Lark is also used in QuEra’s Bloqade circuit dialect for <a href="https://github.com/QuEraComputing/bloqade-circuit/blob/main/src/bloqade/qasm2/parse/qasm2.lark">parsing qasm</a>.</p></div></div><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb3-1"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">{</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"commands"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">[</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">{</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"args"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">[[</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"q"</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">,[</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">99</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">]]]</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">,</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"op"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:{</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"type"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Ry"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">,</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"params"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">[</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"((pi / 2))/pi"</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">]</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">}}</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">,</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">{</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"args"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">[[</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"q"</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">,[</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">99</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">]]]</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">,</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"op"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:{</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"type"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Rx"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">,</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"params"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">[</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"(pi)/pi"</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">]</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">}}</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">,</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">{</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"args"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">[[</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"q"</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">,[</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">99</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">]]]</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">,</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"op"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:{</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"type"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Rz"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">,</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"params"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">[</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"((pi / 4))/pi"</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">]</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">}}</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">,</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">{</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"args"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">[[</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"q"</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">,[</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">99</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">]],[</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"q"</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">,[</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">98</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">]]]</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">,</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"op"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:{</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"type"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"CX"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">}}</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">,</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">{</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"args"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">[[</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"q"</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">,[</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">98</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">]]]</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">,</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"op"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:{</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"type"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Rz"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">,</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">"params"</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">:</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">[</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"(((-pi) / 4))/pi"</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">]</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">}}</span><span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">,</span><span class="er" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">....</span></span></code></pre></div></div>
+<p>As a result, what started as 427 kilobyte QASM file expands to 8.6 megabyte JSON blob!</p>
+<p>In <span class="circle">3</span>, the <code>Circuit.from_dict</code> call converts the python dictionary to a JSON string (again overhead!) and ultimately <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Circuit/CircuitJson.cpp#L49">parses it</a> into the in-memory circuit representation. Even though these layers are in C++, there’s just a lot of overhead parsing all those strings (and I imagine was a partial motivation for <a href="https://github.com/unitaryfoundation/jeff">Jeff</a>).</p>
+<p>Lastly, in <span class="circle">4</span>, there is a <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/pytket/pytket/passes/resizeregpass.py#L45">pass</a> to ensure all classical registers bit width is below a desired target. I’m guessing this is to better map to hardware, e.g.&nbsp;64-bit classical registers make sense, 774-bit registers don’t.</p>
+<p>The take-away I have here is that even transient intermediary representations that might make sense as small scale/for human use (JSON) end up with performance implications at relatively modest scales.</p>
+</section>
+<section id="compiling" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="compiling">Compiling</h3>
+<p>Onwards to the fun stuff.</p>
+<p><img src="https://bachase.github.io/posts/profiling-quantum-compilers-pytket/pytket_sequence_pass.png" class="img-fluid"></p>
+<p>To understand the profile, let’s look back at benchmark harness code. This uses two passes from <code>pytket</code></p>
+<div class="no-bullets page-columns page-full">
+<ul>
+<li><span class="circle">1</span> <a href="https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.FullPeepholeOptimise"><code>FullPeepholeOptimize</code></a> “pass applies Clifford simplifications, commutes single-qubit gates to the front of the circuit and applies passes to squash subcircuits of up to three qubits. This provides a one-size-approximately-fits-all “kitchen sink” solution to Circuit optimisation.” (from <a href="https://docs.quantinuum.com/tket/user-guide/manual/manual_compiler.html#predefined-sequences">docs</a>). <a href="https://en.wikipedia.org/wiki/Peephole_optimization">Peephole optimization</a> is a concept from classical compilers, where you look at small program segments (like looking through a peephole) and locally optimize them. <sup>2</sup></li>
+<li><span class="circle">2</span> <code>AutoRebase</code> converts to the target gateset we use in the benchmarks to ensure an apples-to-apples comparison. Note this only took 200ms, so isn’t actually visible on the image above. But I put the label where you’d end up finding it by zooming or Ctrl+F searching for “rebase”.</li>
+</ul>
+<div class="no-row-height column-margin column-container"><div id="fn2"><p><sup>2</sup>&nbsp;I suspect the debug symbols get a little messed up, as <code>full_peephole_optimise</code> does show up as 30ms of the call stack, but there are seconds of samples in the underlying passes that I see it calling from the source code. I don’t feel like building locally with full debug symbols, so assuming things map back as you’d expect.</p></div></div></div>
+<section id="full-peephole-optimize" class="level4 page-columns page-full">
+<h4 class="anchored" data-anchor-id="full-peephole-optimize">Full Peephole Optimize</h4>
+<p>Fortunately, there’s a nice <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Transformations/OptimisationPass.cpp#L48">single spot</a> in the C++ source that shows what internal passes full peephole optimization uses. Reproducing here</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb4-1">Transform full_peephole_optimise<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">bool</span> allow_swaps<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb4-2">                                OpType target_2qb_gate<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="cb4-3">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">switch</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span>target_2qb_gate<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="cb4-4">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">case</span> OpType<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">::</span>CX<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:</span></span>
+<span id="cb4-5">      <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span></span>
+<span id="cb4-6">          synthesise_tket<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;&gt;</span> two_qubit_squash<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">false</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;&gt;</span></span>
+<span id="cb4-7">          clifford_simp<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span>allow_swaps<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;&gt;</span> synthesise_tket<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;&gt;</span></span>
+<span id="cb4-8">          two_qubit_squash<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span>allow_swaps<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;&gt;</span> three_qubit_squash<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;&gt;</span></span>
+<span id="cb4-9">          clifford_simp<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span>allow_swaps<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;&gt;</span> synthesise_tket<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">());</span></span>
+<span id="cb4-10">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/* snip */</span></span>
+<span id="cb4-11">  <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span></span>
+<span id="cb4-12"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span></span></code></pre></div></div>
+<p>By switching to the left-heavy <sup>3</sup> view, we see <code>three_qubit_squash</code> <span class="circle">1</span> is by far the longest running at 52 seconds. The mouse-overed <code>two_qubit_swash</code> <span class="circle">2</span> (which is called twice) runs for 4.5 seconds.</p>
+<div class="no-row-height column-margin column-container"><div id="fn3"><p><sup>3</sup>&nbsp;Recall, the left-heavy view is not time-ordered, and insteads pushes the longer running segments of the sampled call stack to the left of the chart.</p></div></div><p><img src="https://bachase.github.io/posts/profiling-quantum-compilers-pytket/pytket_full_peephole.png" class="img-fluid"></p>
+<p>Focusing on <code>three_qubit_squash</code>, it is defined <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Transformations/ThreeQubitSquash.cpp#L311">here</a> in C++, and is also documented as a <a href="https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.ThreeQubitSquash">standalone pass</a></p>
+<blockquote class="blockquote">
+<p>Squash three-qubit subcircuits into subcircuits having fewer CX gates, when possible, and apply Clifford simplification.</p>
+</blockquote>
+<p>Looking at the C++ code, it assumes all quantum operations in the circuit are single qubit or CNOT gates. It uses <code>QISystem</code> to track sets of 3-qubit interactions (represented by <code>QInteraction</code>). The pass walks the DAG representation of the circuit in topological order. For each quantum operation, it checks if it overlaps with an existing set of 3-qubit interactions. If so, it combines with them. If its a fresh interaction independent of any prior ones, it starts a new <code>QInteraction</code>. Otherwise, its an operation that would cause an existing <code>QInteraction</code> to exceed 3-qubits (so overlaps with say 1 of the existing 3 qubits). In this cases, it “closes” the interaction, taking the set of gates that had been combined to this interaction and replacing with an equivalent unitary <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Transformations/ThreeQubitSquash.cpp#L109">decomposed</a> to a canonical sequence of a few gates. So in short, contiguous runs of 3-qubit interactions get decomposed to a few gates. This is an interesting comparison to what we saw in the <a href="../../posts/profiling-quantum-compilers-qiskit">Qiskit post</a>, where things like commutative cancellation/re-ordering via algebraic gate identities was the strategy. This <code>pytket</code> pass is more like a synthesis approach.</p>
+<p>The <code>close_interaction</code> function doing that synthesis dominates the runtime. From there, time is spent in <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Circuit/ThreeQubitConversion.cpp#L436"><code>three_qubit_synthesis</code></a> (20%) which does a numerical decomposition of three qubit gates and <code>singleq_clifford_sweep()</code> (40%) (care of <code>clifford_simp</code>) which leverages Clifford gate rules to simplify.</p>
+<p>My only observation poking around this area is a few lengthy calls to <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Transformations/PQPSquash.cpp#L64"><code>PQPSquasher::flush</code></a>. The <code>PQPSquasher</code> class “squashes chains of single qubit gates to minimal sequences of any two type of rotations (Rx, Ry or Rz), using Euler angle decompositions” (from <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/include/tket/Transformations/PQPSquash.hpp#L28">here</a>). Searching for this in the Sandwhich view of speedscope, I see 15 seconds of CPU time (22% of the entire runtime) here, even though only 110 ms of self-time in that function.</p>
+<p><img src="https://bachase.github.io/posts/profiling-quantum-compilers-pytket/pqp_flush.png" class="img-fluid"></p>
+<p>Further poking in the Callee side of the Sandwich view, I see a bunch of <code>SymEngine::</code> functions, which is a <a href="https://symengine.org/">third-party library</a> for symbolic mathematics, that can be used as a backend for Sympy. For this context, it shows up when merging rotations in the <code>PQPSquasher</code> class (see <code>total_angle</code> in <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Transformations/PQPSquash.cpp#L168"><code>merge_rotations</code></a>). I’m not going to dig much futher, but I’m not suprised there is some overhead for doing symbolic level mathematics. I don’t know if there is any caching or other performance optimization strategies with SymEngine. Perhaps there is a way to disable and switch to floating point calculations instead of that is sufficient for your use case. But it is interesting to the circuits Qiskit and tket generate:</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs"><li class="nav-item"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" aria-controls="tabset-1-1" aria-selected="true" href="">tket</a></li><li class="nav-item"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" aria-controls="tabset-1-2" aria-selected="false" href="">qiskit</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" aria-labelledby="tabset-1-1-tab">
+<pre><code>rz(3.998046875*pi) q[91];
+cx q[98],q[92];
+rz(0.015625*pi) q[93];
+cx q[97],q[94];
+rz(3.75*pi) q[95];
+cx q[99],q[91];
+rz(3.9921875*pi) q[92];
+cx q[97],q[93];
+rz(0.0625*pi) q[94];
+cx q[96],q[95];</code></pre>
+</div>
+<div id="tabset-1-2" class="tab-pane" aria-labelledby="tabset-1-2-tab">
+<pre><code>cx q[93],q[92];
+rz(-3*pi/4) q[92];
+ry(pi/2) q[92];
+rz(1.5707933307386703) q[92];
+cx q[99],q[91];
+rz(-pi/512) q[91];
+cx q[99],q[91];
+rz(pi/512) q[91];
+cx q[98],q[91];
+rz(-pi/256) q[91];
+</code></pre>
+</div>
+</div>
+</div>
+<p>Above are random exceprts of in the middle of the compiled QFT circuit (exported to QASM). Both have single qubit rotation angles that are multiple of <code>pi</code>, but qiskit lagely keeps them as simple fractions (but not all!). tket has them as some floating point multiple of <code>pi</code>. So <code>qiskit</code> must have an faster internal representation that is either symbolic or tracks the fraction representation relative to <code>pi</code>.</p>
+</section>
+</section>
+<section id="a-final-bottoms-up-view" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="a-final-bottoms-up-view">A final Bottoms up view</h3>
+<p>One last note on <code>tket</code>, check out the bottom’s up view sorted by self-time</p>
+<p><img src="https://bachase.github.io/posts/profiling-quantum-compilers-pytket/pytket_memory.png" class="img-fluid"></p>
+<p>A little over 7 seconds is spent allocating and freeing memory and this is largely in C++ code. This is just a reminder that just using a compiled language is not a guarantee of speed. How you organize your data and use memory has a big impact<sup>4</sup>.</p>
+<div class="no-row-height column-margin column-container"><div id="fn4"><p><sup>4</sup>&nbsp;One drive-by thing I noticed was a use of <code>std::list</code> in the <code>PQPSquash</code> code <a href="https://github.com/CQCL/tket/blob/50f032f630baffa411ef336e3fd14d4f5120c743/tket/src/Transformations/PQPSquash.cpp#L83">here</a>. <code>std::list</code> is a linked list, so each item is a new memory allocation. Although the code does rely on re-ordering/removing elements in the list, I bet a flat memory structure like <code>std::vector</code> wouldn’t be too hard and could perform much better.</p></div></div></section>
+</section>
+<section id="tldr" class="level2">
+<h2 class="anchored" data-anchor-id="tldr">TL;DR</h2>
+<p>The vast majority of the runtime was spent in the <code>FullPeepholeOptimise</code> pass, particularly within the <code>three_qubit_squash</code> routine. This pass identifies contiguous blocks of 3-qubit interactions and re-synthesizes them into a more optimal gate sequence. A significant portion of this synthesis time is spent in symbolic math routines for simplifying single-qubit rotations.</p>
+<p>Also of note is a 20x size overhead in parsing QASM; the 427 KB input file is first converted into an 8.6 MB JSON representation before being loaded into the final in-memory circuit.</p>
+<p>I’m looking forward to seeing what <code>tket2</code> does to improve on these areas!</p>
+<p><em>AI Disclaimer</em>: I’ve used LLMs to review and give feedback on this post, but the original content was written by me.</p>
+
+
+</section>
+
+
+ ]]></description>
+  <guid>https://bachase.github.io/posts/profiling-quantum-compilers-pytket/</guid>
+  <pubDate>Mon, 29 Sep 2025 00:00:00 GMT</pubDate>
+</item>
 <item>
   <title>Profiling Quantum Compilers: Qiskit</title>
   <link>https://bachase.github.io/posts/profiling-quantum-compilers-qiskit/</link>
@@ -19,7 +544,7 @@
 
 
 
-<p>This post is the first follow-up in the quantum compiler profiling <a href="posts/profiling-quantum-compilers/">series</a>, focusing on Qiskit version 2.1.1. Let’s dive right in!</p>
+<p>This post is the first follow-up in the quantum compiler profiling <a href="../../posts/profiling-quantum-compilers/">series</a>, focusing on Qiskit version 2.1.1. Let’s dive right in!</p>
 <section id="overview" class="level2 page-columns page-full">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
 <p>We begin with a top-level view of the compilation (or transpilation in Qiskit lingo). This took a total of 1.04 seconds. You can inspect this function-aggregated view in speedscope <a href="https://www.speedscope.app/#profileURL=https%3A%2F%2Fraw.githubusercontent.com%2Fbachase%2Fquantum-compiler-profiling%2Frefs%2Fheads%2Fmain%2Fnative.functionagg.profiles%2Fqiskit.profile.json&amp;title=Qiskit%20Profile%20FunctionAgg">here</a>. <img src="https://bachase.github.io/posts/profiling-quantum-compilers-qiskit/qiskit_top_level.png" class="img-fluid"></p>
