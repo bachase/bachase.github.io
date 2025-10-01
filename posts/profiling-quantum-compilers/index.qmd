@@ -103,6 +103,8 @@ The code uses a 100-qubit QFT circuit in [`ucc-bench`](https://github.com/unitar
 
 The QFT circuit was chosen based in recent `ucc-bench` [performance results](https://github.com/unitaryfoundation/ucc-bench/blob/main/results/ucc-benchmarks-8-core-U22.04/compilation_benchmarks/20250819/20250819125708.eca4a630a31567ea794b1e8f90d5038928110223.compilation.csv):
 
+<a id="benchmark-summary"></a>
+
 |Compiler      |benchmark_id|raw_multiq_gates|compile_time_ms|compiled_multiq_gates|
 |--------------|------------|----------------|---------------|---------------------|
 |ucc           |qft         |10050           |478.4261       |2740                 |
