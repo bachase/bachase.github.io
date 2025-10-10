@@ -6,9 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2025-08-21">
+<meta name="dcterms.date" content="2025-10-01">
 
-<title>Profiling Quantum Compilers: Introduction – bachase notes</title>
+<title>Profiling Quantum Compilers: pyqpanda – bachase notes</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -161,7 +161,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Profiling Quantum Compilers: Introduction</h1>
+<h1 class="title">Profiling Quantum Compilers: pyqpanda</h1>
 </div>
 
 
@@ -172,16 +172,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 21, 2025</p>
+      <p class="date">October 1, 2025</p>
     </div>
   </div>
   
-    <div>
-    <div class="quarto-title-meta-heading">Modified</div>
-    <div class="quarto-title-meta-contents">
-      <p class="date-modified">September 8, 2025</p>
-    </div>
-  </div>
     
   </div>
   
@@ -190,137 +184,81 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>As part of my work on <a href="https://github.com/unitaryfoundation/ucc"><code>ucc</code></a>, I’ve spent most of my time to date on benchmarking. In the companion repository <a href="https://github.com/unitaryfoundation/ucc-bench"><code>ucc-bench</code></a>, we’ve collected a small suite of representative circuits and built tooling to automate benchmarking performance of quantum compilers, especially as new versions are released.</p>
-<p>Recently, my focus has shifted more toward the internals of quantum compilation, and I wanted to get a deeper understanding of how these compilers actually work. I’ve read papers and stepped through code with a debugger, but the performance angle has been nagging at me. We’re seeing a trend of moving core compiler optimization passes to high-performance languages like Rust <a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>, so I figured a great way to learn why is to see where today’s compilers spend their time. By profiling a compiler on a benchmark circuit, we can gain insight into both architecture and performance bottlenecks.</p>
-<div class="no-row-height column-margin column-container"><div id="fn1"><p><sup>1</sup>&nbsp;Notably <a href="https://medium.com/qiskit/new-weve-started-using-rust-in-qiskit-for-better-performance-a3676433ca8c">Qiskit</a> and <a href="https://github.com/CQCL/tket2">tket</a></p></div></div><p>This is the first post in a series where I’ll explore the performance of quantum compilers by putting them under the profiler.</p>
-<section id="profiling-quantum-compilers" class="level2 page-columns page-full">
-<h2 class="anchored" data-anchor-id="profiling-quantum-compilers">Profiling Quantum Compilers</h2>
-<p>In this post, I briefly introduce profiling Python with the amazing <a href="https://github.com/benfred/py-spy"><code>py-spy</code></a> tool. I won’t go into exhaustive detail on profiling, but I want to provide just enough background (by way of an example) to understand the results in later posts. I’ll also give a brief overview of the repository that contains the code and scripts used to generate the compiler profiling data.</p>
-<section id="profiling-and-py-spy" class="level3 page-columns page-full">
-<h3 class="anchored" data-anchor-id="profiling-and-py-spy">Profiling and py-spy</h3>
-<p>Profiling is the analysis of a program’s execution to understand where it’s spending its resources. For our purposes, we care about one primary resource: time. We want to know which functions are making the compiler slow.</p>
-<p><a href="https://github.com/benfred/py-spy"><code>py-spy</code></a> is a fantastic sampling profiler for Python with minimal overhead. It captures a sample of a running program’s call stack at a regular frequency (say 100 times per second). By aggregating thousands of these samples, <code>py-spy</code> builds a statistical picture of where the program spends its time. A crucial feature for our work is the <code>--native</code> flag<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>. This lets <code>py-spy</code> record non-Python parts of the call stack, letting us look inside the compilers that mix Python with native code.</p>
-<div class="no-row-height column-margin column-container"><div id="fn2"><p><sup>2</sup>&nbsp;Unfortunately, <code>--native</code> is only <a href="https://www.benfrederickson.com/profiling-native-python-extensions-with-py-spy/">supported</a> on linux/windows and not my Mac :(. That’s why I used Github codespaces below.</p></div></div><section id="an-example" class="level4 page-columns page-full">
-<h4 class="anchored" data-anchor-id="an-example">An example</h4>
-<p>Let’s look at an example adapted from a <a href="https://yosefk.com/blog/how-profilers-lie-the-cases-of-gprof-and-kcachegrind.html">classic post</a> on how profilers can be misleading. Turns out modern sampling profilers like <code>py-spy</code> handle the issue in that post, but its a good way to explore the visualizations <code>py-spy</code> generates.</p>
-<p>Consider this Python script</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> work(n):</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># This is a stand-in for a real computational task.</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    i <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> i <span class="op">&lt;</span> n:</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        i <span class="op">+=</span> <span class="dv">1</span></span>
+<p>For the next post in the quantum compiler profiling <a href="../../posts/profiling-quantum-compilers/">series</a>, we will focus on pyqpanda3 version 0.3.1. <a href="https://qcloud.originqc.com.cn/document/qpanda-3/index.html">pyqpanda3</a> is “high-performance quantum programming framework that enhances quantum computing efficiency through optimized circuit compilation, an advanced instruction stream format (OriginBIS), and hardware-aware execution strategies” developed by <a href="https://originqc.com.cn/">OriginQ</a>. Although freely available as a python package, it is closed source with the python code shipping compiled shared object files for supported platforms. I’ve included it because it is very fast and performant on benchmarks, probably thanks to its internal represenation of quantum circuits as a compact binary instruction stream. There are more details in <a href="https://arxiv.org/abs/2504.02455">this</a> arXiv paper from the OriginQ team, but even then, only at a high-level.</p>
+<section id="overview" class="level2 page-columns page-full">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>As we did the <a href="../../posts/profiling-quantum-compilers-qiskit">last</a> <a href="../../posts/profiling-quantum-compilers-pytket">times</a>, we begin with a top-level view of the compilation. This took a total of 560 milliseconds. Remember, we are sampling 100 times per second, so this is only 56 samples. You can inspect this function-aggregated view in speedscope <a href="https://www.speedscope.app/#profileURL=https%3A%2F%2Fraw.githubusercontent.com%2Fbachase%2Fquantum-compiler-profiling%2Frefs%2Fheads%2Fmain%2Fnative.functionagg.profiles%2Fpyqpanda.profile.json&amp;title=pyqpanda3%20Profile%20FunctionAgg">here</a>.</p>
+<p><img src="pyqpanda_overview.png" class="img-fluid"></p>
+<p>The benchmark harness code is below, with the code annotated with the labels in the image above.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_pyqpanda(qasm): <span class="co">#                             (1)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="im">from</span> pyqpanda3.intermediate_compiler <span class="im">import</span> (</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>        convert_qasm_string_to_qprog,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="im">from</span> pyqpanda3.transpilation <span class="im">import</span> Transpiler</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> easy_task():</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># A task that calls 'work' with a small input.</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    work(<span class="dv">100_000</span>)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hard_task():</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># A task that calls 'work' with a much larger input.</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    work(<span class="dv">1_000_000</span>)</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> main():</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">True</span>:</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>        easy_task()</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>        hard_task()</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span>:</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    main()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>In this code, both <code>easy_task()</code> and <code>hard_task()</code> call the same function, <code>work()</code>, but with vastly different workloads. A simpler profiler that only tracks how much time is spent on specific lines of code would just tell us <code>work()</code> is slow, but not why. A sampling profiler like <code>py-spy</code>, by virtue of collecting the entire call stacks, tells us both where the program is but also how it got there. This means it can distinguish call paths that get to <code>work()</code>, differentiating calls that come by way of <code>easy_task()</code> vs <code>hard_task()</code>.</p>
-<p>Let’s see this in action. Assuming the above is saved to a <code>main.py</code>, you would run<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> the command below for a few seconds and then kill the process:</p>
-<div class="no-row-height column-margin column-container"><div id="fn3"><p><sup>3</sup>&nbsp;On my mac, I need to run this as <code>sudo</code> for <code>py-spy</code> to be able to introspect the running process. I didn’t use <code>--native</code> since this is pure python.</p></div></div><div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span>  py-spy record <span class="at">--format</span> speedscope <span class="at">-o</span> profile.json <span class="at">--function</span> <span class="at">--</span> python main.py</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Here, we tell <code>py-spy</code> to record a profile of <code>python main.py</code> and save it to the file <code>profile.json</code><a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>. It uses the <code>speedscope</code> format, which you can upload to <a href="http://speedscope.app/">http://speedscope.app/</a> to visualize.</p>
-<div class="no-row-height column-margin column-container"><div id="fn4"><p><sup>4</sup>&nbsp;I also passed <code>--function</code> to aggregate samples by the first line number of a function versus the sampled number. This way whether the sample is taken when we are at the <code>i+=1</code> or the <code>while i &lt;n:</code> line in <code>work()</code>, the profile result groups them together. If we didn’t do this, the visualization would end up creating an entry for each distinct line-number of <code>work()</code> sampled and make it harder to analyze the charts.</p></div></div><p>Let’s walk through the speedscope <a href="https://www.speedscope.app/#profileURL=https%3A%2F%2Fbachase.github.io%2Fposts%2Fprofiling-quantum-compilers%2Fprofile.json&amp;title=Example%20Profile">view</a> of these results:</p>
-<section id="time-order-view" class="level5 page-columns page-full">
-<h5 class="anchored" data-anchor-id="time-order-view">Time Order View</h5>
-<p><img src="./time_ordered.png" class="img-fluid"> This is the default view when you first load the profile in speedscope. Time flows from left to right, and along the bottom, you see the the call stack at each point in time. So the blue bar with <code>main()</code> covers the entire view, then beneath it you see the alternating calls of <code>hard_task()</code> and <code>easy_task()</code> (although easy is too narrow to see its name!). The width of each box corresponds to the CPU time of that function call<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a>. Mousing over a function creates a pop-up with the specific duration and source file for that call. Clicking on a function opens a call-stack view at the bottom, and shows time spent on this specific instance of the function call and aggregate time spent on all such function calls. There’s not a ton more to glean from this simple example, since the code is small enough that we already know a lot about its execution.</p>
-<div class="no-row-height column-margin column-container"><div id="fn5"><p><sup>5</sup>&nbsp;That is, the time spent in that function call and it’s descendant calls. This might be much longer than the time spent actually in that function itself (the self-time) if it mostly calls into other functions.</p></div></div><p>For more complex applications, the time ordered view is a great way to understand the flow of the program, where wider rectangles guide you to the longer running parts of the program. I find it useful to start with this view to confirm your profile captured what you intended, and then to orient yourself around “goldilocks” function calls. These are functions that aren’t super deep in the call stack that its unclear how you got there, but are also not too high-level that they are basically the whole program. Somewhere in the middle is just right.</p>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    circuit <span class="op">=</span> convert_qasm_string_to_qprog(qasm) <span class="co">#    (2)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    transpiler <span class="op">=</span> Transpiler()</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> transpiler.transpile(                 <span class="co">#    (3)</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        circuit,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>        init_mapping<span class="op">=</span>{},</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>        optimization_level<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        basic_gates<span class="op">=</span>[<span class="st">"RX"</span>, <span class="st">"RY"</span>, <span class="st">"RZ"</span>, <span class="st">"H"</span>, <span class="st">"CNOT"</span>],</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The bulk of the time is in two spots:</p>
+<div class="no-bullets">
+<ul>
+<li><span class="circle">2</span> [71%, 400ms] in <code>convert_qasm_string_to_qprog</code> parsing the 25K line QASM file into pyqpanda3’s in-memory circuit representation.</li>
+<li><span class="circle">3</span> [27%, 150ms] in <code>transpile</code> actually optimizing the circuit.</li>
+</ul>
+</div>
+<p>Not visible is the python import time, which was fairly negligible at 10ms. The overall runtime is almost 4 times faster than the next best <a href="../../posts/profiling-quantum-compilers/#benchmark-summary">compiler benchmarked</a> for this QFT circuit.</p>
+<section id="parsing" class="level3">
+<h3 class="anchored" data-anchor-id="parsing">Parsing</h3>
+<p>pyqpanda3 is quite fast, but it’s notable that it spends more time parsing than transpiling the circuit.</p>
+<p><img src="./pyqpanda_parse.png" class="img-fluid"></p>
+<p>In the sandwich view above, we see what is likely a hand-built parser + tokenizer. The hierarchy of calls to <span class="circle">1</span> show the parser side, where a program is comprised of statements, which can probably be quantum or classical. Our QASM file is all quantum ones that are gate calls with operands. Below those parsers in <span class="circle">2</span> you can see a call to <code>CompilerQASM::QASMScanner::next</code> that pulls out the next token for the parser.</p>
+<p>Under the hood this is using C++ standard library streams for this. For example, the <code>CompilerParser::Scanner::consumeNumberLiteral</code> uses a C++ <a href="https://en.cppreference.com/w/cpp/io/basic_stringstream.html"><code>stringstream</code></a> to read into the number. There is some overhead from streams dealing with <a href="https://en.cppreference.com/w/cpp/locale/locale.html"><code>locales</code></a> (also in <span class="circle">3</span> when calling <code>CompilerParser::Token::toString</code>). Specifically, parsing will have to call locale facets (ctype, numpunct, num_get) to classify characters and handle decimal points/thousands separators that may differ by region. Streams and locales alos have bookkeeping on whitespace and stream state. These can involve a few layers of indirection (via virtual function dispatch) that are a tad heavy for these short parsing calls. I’m nitpicking here, but given QASM has a specification, you might get more performance here with a leaner/purpose-built parser.</p>
 </section>
-<section id="left-heavy-view" class="level5">
-<h5 class="anchored" data-anchor-id="left-heavy-view">Left Heavy View</h5>
-<p><img src="./left_heavy.png" class="img-fluid"></p>
-<p>The left heavy view throws out the time-ordered aspects, groups similar call stacks together, and then puts the heavier (longest running) stacks to the left of the plot. It has the same mouse-over and click details as the time-order view. Use this view to see where the program is spending its time overall, regardless of the order of execution. For this example, it nicely shows most time in <code>main()</code> is spent on <code>hard_task()</code> vs <code>easy_task()</code>, even though there are corresponding calls to <code>work()</code> below each. This view is useful when there are lots of interleaved function calls but you just care about the aggregate time spent in each alternate.</p>
+<section id="transpiling" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="transpiling">Transpiling</h3>
+<p>Without the source, it’s even harder to tell what is happening with transpilation, but we at least get a hint from the time-ordered view below<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.</p>
+<div class="no-row-height column-margin column-container"><div id="fn1"><p><sup>1</sup>&nbsp;When writing this section, I decided to re-run the profiler with a higher sampling rate of 400 times per second because the standard 100 times/second had lots of single sample call stack entries that might not’ve been representative. Click <a href="https://www.speedscope.app/#profileURL=https%3A%2F%2Fraw.githubusercontent.com%2Fbachase%2Fquantum-compiler-profiling%2Frefs%2Fheads%2Fmain%2Fpyqpanda.profiles%2Fpyqpanda.400.profile.json">here</a> to view this version in speedscope. Note there was some impact to runtime as a result, but the relative durations of each phase of transpilation is similar and I prefer slightly more detailed callstacks.</p></div></div><p><img src="./pyqpanda_transpile.png" class="img-fluid"></p>
+<p>This timeline view zooms in on the transpilation call, which has three main phases</p>
+<div class="no-bullets">
+<ul>
+<li><span class="circle">1</span> [22.5ms] is <code>DAGQCircuit::from_qprog</code>, which converts from a general representation to a DAG circuit, presumably to be a DAG-style IR for the style of circuit optimizations in pyqpanda.</li>
+<li><span class="circle">2</span> [66ms] in <code>Transpiler::transpile</code>. I see calls to <code>OptimizationPass::unitary_synthesis</code>. Of note is a final call to <code>DAGQCircuit::batch_insert</code>, which would potentially help performance by modifying the dag all at once at the end, versus doing it piece by piece as its walked</li>
+<li><span class="circle">3</span> [280ms] in <code>BasicTranslationPass::merage_and_translation</code> (typo is in the original binary). Here, I see calls like <code>translate_cz_to_cx_h</code>, <code>translate_oracle_to_cz_u4</code>, <code>translate_u3_to_rx_rz</code>. I also see a stack of calls for <code>TwoQubitBasisDecomposer</code> that has a <code>Weyl</code> decomposition. All of these are repeated a few times, suggesting some looping pass.</li>
+</ul>
+</div>
+<p>Unfortunately, its hard to backout the overall strategy here. But it looks like some standard translation/substitution rules, and then some consolidation followed by some two-qubit decomposition/synthesis before repeating. The documentation states for this highest level optimization configuration, “advanced optimizations are performed, including matrix optimization, two-qubit gate cancellation, and single-qubit gate merging.”</p>
 </section>
-<section id="sandwich-view" class="level5">
-<h5 class="anchored" data-anchor-id="sandwich-view">Sandwich View</h5>
-<p>This last view has two useful aspects. The first is the table in the image above. This shows the total time and self-time spent in a function call, and as a percent of the entire profile result.</p>
-<section id="two-times" class="level6">
-<h6 class="anchored" data-anchor-id="two-times">Two Times</h6>
-<p><img src="./sandwich.png" class="img-fluid"> Functions with large/large percent of self-time are hotspots to focus on for optimization. Self-time means the CPU is busy working directly in that function, so you can consider zooming in and doing some micro-benchmarking and optimizations on just that function. For our simple example, it nicely shows that the CPU is really spending its time in that silly loop in <code>work()</code>. If that were real code though, finding a way to optimize it would nicely improve overall performance.</p>
-<p>Functions with large/large percent of total-time indicate the primary paths of program execution. This is the total CPU time spent where this function was somewhere in the call stack, but not necessarily where the program was running when sampled. So by definition, <code>main()</code> and other high-level functions have large percentages, but that doesn’t really help you understand much. Instead, you would want to scroll down this list to get to the aforementioned goldilocks level. For me, this is when I get to a function and go “huh, I’m surprised it spent that much time here”. For our simple example, we see that <code>hard_task</code> is indeed ten times heavier than <code>easy_task</code>.</p>
+<section id="demangling-and-dependencies" class="level3">
+<h3 class="anchored" data-anchor-id="demangling-and-dependencies">Demangling and dependencies</h3>
+<p>Before wrapping up, I did want to poke a little bit more at the shared object files to learn a little more of what is used. For my mac, running the code below demangles the symbols of the shared library and then collects them by C++ namespace and name. Note this just looks at the transpilation module from pyqpanda3.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nm</span> <span class="at">--demangle</span> transpilation.cpython-313-darwin.so <span class="dt">\</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $3}'</span> <span class="dt">\</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">|</span> <span class="fu">grep</span> <span class="st">'::'</span> <span class="dt">\</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">|</span> <span class="fu">sed</span> <span class="st">'s/(.*//g'</span> <span class="dt">\</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">|</span> <span class="fu">awk</span> <span class="at">-F</span><span class="st">'::'</span> <span class="st">'{print $1"::"$2}'</span> <span class="dt">\</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">|</span> <span class="fu">sort</span> <span class="at">-u</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Most are in <code>QPanda3</code>, but we do see a use of <a href="https://eigen.tuxfamily.org/index.php?title=Main_Page"><code>Eigen</code></a> for linear algebra and <a href="https://github.com/fmtlib/fmt"><code>fmt</code></a> for string formatting. You can also see a bunch of functions like <code>QPanda3::translate_rxx_to_cx_rz_h</code>, which correspond to the built-in gate rewrite rules.</p>
+Expand below to see all the symbols.
+<details>
+<summary>
+List of symbols
+</summary>
+_compute_theta:: _dec_uc_sqg:: calculate_score:: check_gate_connected:: CompilerOriginIR::IRQProgNodeCollectorParser CompilerOriginIR::OriginIRScanner CompilerParser::Parser CompilerParser::Scanner dfs:: Eigen::internal fmt::v11 generateBinarySeries:: generateCombinations:: longest_path_dfs:: modArray:: pybind11::error_already_set QPanda3::amplitude_damping_error QPanda3::BasicTranslationPass QPanda3::block_index_map_key QPanda3::cancellation_map_key QPanda3::ChipBackend QPanda3::CPUAvx2 QPanda3::CPUQVM QPanda3::create_gate QPanda3::DAG QPanda3::DAGNode QPanda3::DAGQCircuit QPanda3::decoherence_error QPanda3::decompose QPanda3::decompose_to_RPhi QPanda3::decomposeTensorProduct QPanda3::DefaultTranspilationPasses QPanda3::depolarizing_error QPanda3::diagonal_decomposition QPanda3::DrawByLayer QPanda3::DrawPicture QPanda3::EquivalenceLibrary QPanda3::GateUnitaryMatrix QPanda3::GateUnitaryMatrixUtils QPanda3::generate_topology QPanda3::get_precessor_single_gates_map QPanda3::get_unitary_matrix QPanda3::get_unitary_matrix_order QPanda3::GetUsedQubits QPanda3::InitPass QPanda3::is_double_gate QPanda3::is_single_gate QPanda3::is_supported_avx2 QPanda3::is_tensor_product QPanda3::isometry_decomposition QPanda3::IsometryDecomposition QPanda3::Karus QPanda3::LayoutPass QPanda3::LinearDepthDecomposition QPanda3::MPS_Tensor QPanda3::NameGenerator QPanda3::NoiseCircuit QPanda3::NoiseModel QPanda3::NoiseUtils QPanda3::OCircuitFusion QPanda3::operator&lt;&lt; QPanda3::OptimizationPass QPanda3::pauli_x_error QPanda3::pauli_y_error QPanda3::pauli_z_error QPanda3::phase_damping_error QPanda3::pre_handle QPanda3::QCircuit QPanda3::QGate QPanda3::QGateImplementation QPanda3::QMeasure QPanda3::QOracle QPanda3::QPandaOptions QPanda3::QProg QPanda3::QProgProcessor QPanda3::QResult QPanda3::QSDecomposition QPanda3::QStateCPU QPanda3::QStateMPS QPanda3::QuantumError QPanda3::QuantumInformation QPanda3::QuantumRegister QPanda3::QuantumState QPanda3::remap_qgate QPanda3::RoutingPass QPanda3::SabrePreLayout QPanda3::SchedulingPass QPanda3::SingletonPermutation QPanda3::task QPanda3::translate_ch_to_cx_h_p QPanda3::translate_cp_to_cx_p QPanda3::translate_crphi_to_oracle QPanda3::translate_crx_to_cx_u1_u3 QPanda3::translate_cry_to_cx_ry QPanda3::translate_crz_to_cx_rz QPanda3::translate_cu1_to_cx_u1 QPanda3::translate_cu2_to_cx_u1_u3 QPanda3::translate_cu3_to_cx_u1_u3 QPanda3::translate_cu4_to_cx_p_u3 QPanda3::translate_cx_to_cp_u3 QPanda3::translate_cx_to_cz_h QPanda3::translate_cx_to_cz_rz_x1 QPanda3::translate_cy_to_cx_p QPanda3::translate_cz_to_cx_h QPanda3::translate_h_to_rx_ry QPanda3::translate_h_to_RZ_X1 QPanda3::translate_h_to_u2 QPanda3::translate_i_to_u1 QPanda3::translate_iswap_to_cx_s_h QPanda3::translate_oracle_to_cz_u4 QPanda3::translate_p_to_RZ QPanda3::translate_p_to_u1 QPanda3::translate_rphi_to_u3 QPanda3::translate_rx_to_rz_x1 QPanda3::translate_rx_to_u3 QPanda3::translate_rxx_to_cx_rz_h QPanda3::translate_ry_to_rz_x1 QPanda3::translate_ry_to_u3 QPanda3::translate_ryy_to_cx_rx_rz QPanda3::translate_rz_to_u1 QPanda3::translate_rzx_to_cx_rz_h QPanda3::translate_rzz_to_cx_rz QPanda3::translate_s_to_RZ QPanda3::translate_s_to_u1 QPanda3::translate_sqiswap_to_cz_rz_x1 QPanda3::translate_swap_to_cx QPanda3::translate_t_to_RZ QPanda3::translate_t_to_u1 QPanda3::translate_u1_to_u3 QPanda3::translate_u2_to_u3 QPanda3::translate_u3_to_rphi_rz QPanda3::translate_u3_to_rx_rz QPanda3::translate_u3_to_u4 QPanda3::translate_u3_to_x1_rz QPanda3::translate_u4_to_u3 QPanda3::translate_u4_to_x1_rz QPanda3::translate_x_to_rx QPanda3::translate_x_to_u3 QPanda3::translate_x_to_x1 QPanda3::translate_x1_to_rphi QPanda3::translate_x1_to_rx QPanda3::translate_y_to_ry QPanda3::translate_y_to_u3 QPanda3::translate_y_to_x1_rz QPanda3::translate_y1_to_rz_x1 QPanda3::translate_z_to_rz QPanda3::translate_z_to_u1 QPanda3::translate_z1_to_rz QPanda3::TranspilationPass QPanda3::Transpiler QPanda3::TwoQubitBasisDecomposer QPanda3::TwoQubitWeylDecomposition QPanda3::uc_decomposition QPanda3::ucry_circuit QPanda3::ucry_decomposition QPanda3::ucrz_decomposition QPanda3::unroll_quantum_circuit QPandaCompiler::QProgNodeCollector std::__1 Utils::convert_int_to_str Utils::convert_uinteger_to_binary Utils::number_to_base_string WriteQCircuitTextFile::get_instance
+</details>
 </section>
-<section id="the-actual-sandwich" class="level6">
-<h6 class="anchored" data-anchor-id="the-actual-sandwich">🥪🥪🥪🥪🥪🥪🥪 (the actual sandwich)</h6>
-<p><img src="sandwich-click.png" class="img-fluid"> If you click on a row in this list, you get the sandwich view shown above. This view splits the timeline around that function, effectively filtering the full time-ordered view to just callers and callees of that function. Not suprisingly, this is useful to zoom in on a function and get a sense of where it falls in the program execution. I find this especially useful to understand the architecture of the program.</p>
 </section>
-</section>
-</section>
-</section>
-<section id="setup" class="level3 page-columns page-full">
-<h3 class="anchored" data-anchor-id="setup">Setup</h3>
-<p>With that whirlwind tour of profiling behind us, how will we explore quantum compilers? <a href="https://github.com/bachase/quantum-compiler-profiling">https://github.com/bachase/quantum-compiler-profiling</a> is a repository with all you need!</p>
-<p>The code uses a 100-qubit QFT circuit in <a href="https://github.com/unitaryfoundation/ucc-bench"><code>ucc-bench</code></a> (by way of <a href="https://github.com/Qiskit/benchpress">benchpress</a> and <a href="https://github.com/pnnl/QASMBench">QASMBench</a>). The script in <code>main.py</code> then transpiles/compiles this circuit via <a href="https://www.ibm.com/quantum/qiskit">Qiskit</a>, <a href="https://github.com/unitaryfoundation/ucc"><code>ucc</code></a>, <a href="https://docs.quantinuum.com/tket/api-docs/index.html">pytket</a>, <a href="https://quantumai.google/cirq">Cirq</a>, or <a href="https://pypi.org/project/pyqpanda3/">pyqpanda3</a>. There’s a corresponding <code>run_bench.sh</code> to generate the profiles using <code>py-spy</code>, and there are sub-directories with some profiles checked in<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a>. I generated these profiles under a GitHub codespace (which you can do yourself by forking within GitHub). A tad more detail is in the <code>README</code>, but the upshot is we will use speedscope to explore each compiler’s results in the <a href="https://github.com/bachase/quantum-compiler-profiling/tree/main/native.profiles"><code>native.profiles</code></a> directory in future posts.</p>
-<div class="no-row-height column-margin column-container"><div id="fn6"><p><sup>6</sup>&nbsp;I ran profiles with &amp; without <code>--function</code> to aggregate samples to start of functions. I don’t a priori know much about each function. Some might be lengthy with lots of internal loops, so I’d rather keep samples of different lines separate to potentially identify that structure. But having the aggregated view with <code>--function</code> will also help coarse grain over those details when first analyzing results.</p></div></div><p>The QFT circuit was chosen based in recent <code>ucc-bench</code> <a href="https://github.com/unitaryfoundation/ucc-bench/blob/main/results/ucc-benchmarks-8-core-U22.04/compilation_benchmarks/20250819/20250819125708.eca4a630a31567ea794b1e8f90d5038928110223.compilation.csv">performance results</a>:</p>
-<p><a id="benchmark-summary"></a></p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 17%">
-<col style="width: 15%">
-<col style="width: 20%">
-<col style="width: 19%">
-<col style="width: 26%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Compiler</th>
-<th>benchmark_id</th>
-<th>raw_multiq_gates</th>
-<th>compile_time_ms</th>
-<th>compiled_multiq_gates</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>ucc</td>
-<td>qft</td>
-<td>10050</td>
-<td>478.4261</td>
-<td>2740</td>
-</tr>
-<tr class="even">
-<td>pytket-peep</td>
-<td>qft</td>
-<td>10050</td>
-<td>48776.9968</td>
-<td>4498</td>
-</tr>
-<tr class="odd">
-<td>qiskit-default</td>
-<td>qft</td>
-<td>10050</td>
-<td>509.0576</td>
-<td>3570</td>
-</tr>
-<tr class="even">
-<td>cirq</td>
-<td>qft</td>
-<td>10050</td>
-<td>32392.2503</td>
-<td>4648</td>
-</tr>
-<tr class="odd">
-<td>pyqpanda3</td>
-<td>qft</td>
-<td>10050</td>
-<td>130.838</td>
-<td>2740</td>
-</tr>
-</tbody>
-</table>
-<p>There is some reduction in two-qubit gates, and the circuit takes a non-trivial amount of compile time. So something interesting is happening!</p>
+<section id="tldr" class="level2">
+<h2 class="anchored" data-anchor-id="tldr">TL;DR</h2>
+<p>The most surprising finding for <code>pyqpanda3</code> is that the vast majority of the runtime (71%) was spent in the <code>convert_qasm_string_to_qprog</code> function parsing the QASM input, not optimizing the circuit. This is due to overhead in its C++ implementation, specifically from using standard library streams and locales, which could be made leaner for a fixed format like QASM.</p>
+<p>The actual transpilation is remarkably fast. While it’s closed source, profiling and demangling the library revealed a multi-stage strategy involving a DAG representation, unitary synthesis, and <a href="https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.synthesis.TwoQubitWeylDecomposition">Weyl decomposition</a>. This peek under the hood also showed its reliance on the popular Eigen and fmt libraries. But it would be great to better understand how these steps are combined to give such strong performance!</p>
 <p><em>AI Disclaimer</em>: I’ve used LLMs to review and give feedback on this post, but the original content was written by me.</p>
 
 
-</section>
 </section>
 
 

@@ -2,22 +2,26 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://bachase.github.io/about.html</loc>
-    <lastmod>2025-09-29T16:55:56.532Z</lastmod>
-  </url>
-  <url>
-    <loc>https://bachase.github.io/posts/profiling-quantum-compilers-qiskit/index.html</loc>
-    <lastmod>2025-09-29T16:55:56.544Z</lastmod>
-  </url>
-  <url>
-    <loc>https://bachase.github.io/index.html</loc>
-    <lastmod>2025-09-29T16:55:56.532Z</lastmod>
-  </url>
-  <url>
-    <loc>https://bachase.github.io/posts/profiling-quantum-compilers-pytket/index.html</loc>
-    <lastmod>2025-09-29T16:55:56.532Z</lastmod>
+    <lastmod>2025-10-10T00:37:41.171Z</lastmod>
   </url>
   <url>
     <loc>https://bachase.github.io/posts/profiling-quantum-compilers/index.html</loc>
-    <lastmod>2025-09-29T16:55:56.549Z</lastmod>
+    <lastmod>2025-10-10T00:37:41.194Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bachase.github.io/posts/profiling-quantum-compilers-pytket/index.html</loc>
+    <lastmod>2025-10-10T00:37:41.177Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bachase.github.io/index.html</loc>
+    <lastmod>2025-10-10T00:37:41.171Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bachase.github.io/posts/profiling-quantum-compilers-qiskit/index.html</loc>
+    <lastmod>2025-10-10T00:37:41.188Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bachase.github.io/posts/profiling-quantum-compilers-pyqpanda/index.html</loc>
+    <lastmod>2025-10-10T00:37:41.171Z</lastmod>
   </url>
 </urlset>

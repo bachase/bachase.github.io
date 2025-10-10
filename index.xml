@@ -9,8 +9,193 @@
 <link>https://bachase.github.io/</link>
 <atom:link href="https://bachase.github.io/index.xml" rel="self" type="application/rss+xml"/>
 <description>bachase&#39;s notes on things he&#39;s learning about</description>
-<generator>quarto-1.8.24</generator>
-<lastBuildDate>Mon, 29 Sep 2025 00:00:00 GMT</lastBuildDate>
+<generator>quarto-1.8.25</generator>
+<lastBuildDate>Wed, 01 Oct 2025 00:00:00 GMT</lastBuildDate>
+<item>
+  <title>Profiling Quantum Compilers: pyqpanda</title>
+  <link>https://bachase.github.io/posts/profiling-quantum-compilers-pyqpanda/</link>
+  <description><![CDATA[ 
+
+
+
+
+<p>For the next post in the quantum compiler profiling <a href="../../posts/profiling-quantum-compilers/">series</a>, we will focus on pyqpanda3 version 0.3.1. <a href="https://qcloud.originqc.com.cn/document/qpanda-3/index.html">pyqpanda3</a> is “high-performance quantum programming framework that enhances quantum computing efficiency through optimized circuit compilation, an advanced instruction stream format (OriginBIS), and hardware-aware execution strategies” developed by <a href="https://originqc.com.cn/">OriginQ</a>. Although freely available as a python package, it is closed source with the python code shipping compiled shared object files for supported platforms. I’ve included it because it is very fast and performant on benchmarks, probably thanks to its internal represenation of quantum circuits as a compact binary instruction stream. There are more details in <a href="https://arxiv.org/abs/2504.02455">this</a> arXiv paper from the OriginQ team, but even then, only at a high-level.</p>
+<section id="overview" class="level2 page-columns page-full">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>As we did the <a href="../../posts/profiling-quantum-compilers-qiskit">last</a> <a href="../../posts/profiling-quantum-compilers-pytket">times</a>, we begin with a top-level view of the compilation. This took a total of 560 milliseconds. Remember, we are sampling 100 times per second, so this is only 56 samples. You can inspect this function-aggregated view in speedscope <a href="https://www.speedscope.app/#profileURL=https%3A%2F%2Fraw.githubusercontent.com%2Fbachase%2Fquantum-compiler-profiling%2Frefs%2Fheads%2Fmain%2Fnative.functionagg.profiles%2Fpyqpanda.profile.json&amp;title=pyqpanda3%20Profile%20FunctionAgg">here</a>.</p>
+<p><img src="https://bachase.github.io/posts/profiling-quantum-compilers-pyqpanda/pyqpanda_overview.png" class="img-fluid"></p>
+<p>The benchmark harness code is below, with the code annotated with the labels in the image above.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> run_pyqpanda(qasm): <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#                             (1)</span></span>
+<span id="cb1-2">    <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> pyqpanda3.intermediate_compiler <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> (</span>
+<span id="cb1-3">        convert_qasm_string_to_qprog,</span>
+<span id="cb1-4">    )</span>
+<span id="cb1-5">    <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> pyqpanda3.transpilation <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> Transpiler</span>
+<span id="cb1-6"></span>
+<span id="cb1-7">    circuit <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> convert_qasm_string_to_qprog(qasm) <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#    (2)</span></span>
+<span id="cb1-8">    transpiler <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> Transpiler()</span>
+<span id="cb1-9">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> transpiler.transpile(                 <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#    (3)</span></span>
+<span id="cb1-10">        circuit,</span>
+<span id="cb1-11">        init_mapping<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>{},</span>
+<span id="cb1-12">        optimization_level<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span>,</span>
+<span id="cb1-13">        basic_gates<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>[<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"RX"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"RY"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"RZ"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"H"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"CNOT"</span>],</span>
+<span id="cb1-14">    )</span></code></pre></div></div>
+<p>The bulk of the time is in two spots:</p>
+<div class="no-bullets">
+<ul>
+<li><span class="circle">2</span> [71%, 400ms] in <code>convert_qasm_string_to_qprog</code> parsing the 25K line QASM file into pyqpanda3’s in-memory circuit representation.</li>
+<li><span class="circle">3</span> [27%, 150ms] in <code>transpile</code> actually optimizing the circuit.</li>
+</ul>
+</div>
+<p>Not visible is the python import time, which was fairly negligible at 10ms. The overall runtime is almost 4 times faster than the next best <a href="../../posts/profiling-quantum-compilers/#benchmark-summary">compiler benchmarked</a> for this QFT circuit.</p>
+<section id="parsing" class="level3">
+<h3 class="anchored" data-anchor-id="parsing">Parsing</h3>
+<p>pyqpanda3 is quite fast, but it’s notable that it spends more time parsing than transpiling the circuit.</p>
+<p><img src="https://bachase.github.io/posts/profiling-quantum-compilers-pyqpanda/pyqpanda_parse.png" class="img-fluid"></p>
+<p>In the sandwich view above, we see what is likely a hand-built parser + tokenizer. The hierarchy of calls to <span class="circle">1</span> show the parser side, where a program is comprised of statements, which can probably be quantum or classical. Our QASM file is all quantum ones that are gate calls with operands. Below those parsers in <span class="circle">2</span> you can see a call to <code>CompilerQASM::QASMScanner::next</code> that pulls out the next token for the parser.</p>
+<p>Under the hood this is using C++ standard library streams for this. For example, the <code>CompilerParser::Scanner::consumeNumberLiteral</code> uses a C++ <a href="https://en.cppreference.com/w/cpp/io/basic_stringstream.html"><code>stringstream</code></a> to read into the number. There is some overhead from streams dealing with <a href="https://en.cppreference.com/w/cpp/locale/locale.html"><code>locales</code></a> (also in <span class="circle">3</span> when calling <code>CompilerParser::Token::toString</code>). Specifically, parsing will have to call locale facets (ctype, numpunct, num_get) to classify characters and handle decimal points/thousands separators that may differ by region. Streams and locales alos have bookkeeping on whitespace and stream state. These can involve a few layers of indirection (via virtual function dispatch) that are a tad heavy for these short parsing calls. I’m nitpicking here, but given QASM has a specification, you might get more performance here with a leaner/purpose-built parser.</p>
+</section>
+<section id="transpiling" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="transpiling">Transpiling</h3>
+<p>Without the source, it’s even harder to tell what is happening with transpilation, but we at least get a hint from the time-ordered view below<sup>1</sup>.</p>
+<div class="no-row-height column-margin column-container"><div id="fn1"><p><sup>1</sup>&nbsp;When writing this section, I decided to re-run the profiler with a higher sampling rate of 400 times per second because the standard 100 times/second had lots of single sample call stack entries that might not’ve been representative. Click <a href="https://www.speedscope.app/#profileURL=https%3A%2F%2Fraw.githubusercontent.com%2Fbachase%2Fquantum-compiler-profiling%2Frefs%2Fheads%2Fmain%2Fpyqpanda.profiles%2Fpyqpanda.400.profile.json">here</a> to view this version in speedscope. Note there was some impact to runtime as a result, but the relative durations of each phase of transpilation is similar and I prefer slightly more detailed callstacks.</p></div></div><p><img src="https://bachase.github.io/posts/profiling-quantum-compilers-pyqpanda/pyqpanda_transpile.png" class="img-fluid"></p>
+<p>This timeline view zooms in on the transpilation call, which has three main phases</p>
+<div class="no-bullets">
+<ul>
+<li><span class="circle">1</span> [22.5ms] is <code>DAGQCircuit::from_qprog</code>, which converts from a general representation to a DAG circuit, presumably to be a DAG-style IR for the style of circuit optimizations in pyqpanda.</li>
+<li><span class="circle">2</span> [66ms] in <code>Transpiler::transpile</code>. I see calls to <code>OptimizationPass::unitary_synthesis</code>. Of note is a final call to <code>DAGQCircuit::batch_insert</code>, which would potentially help performance by modifying the dag all at once at the end, versus doing it piece by piece as its walked</li>
+<li><span class="circle">3</span> [280ms] in <code>BasicTranslationPass::merage_and_translation</code> (typo is in the original binary). Here, I see calls like <code>translate_cz_to_cx_h</code>, <code>translate_oracle_to_cz_u4</code>, <code>translate_u3_to_rx_rz</code>. I also see a stack of calls for <code>TwoQubitBasisDecomposer</code> that has a <code>Weyl</code> decomposition. All of these are repeated a few times, suggesting some looping pass.</li>
+</ul>
+</div>
+<p>Unfortunately, its hard to backout the overall strategy here. But it looks like some standard translation/substitution rules, and then some consolidation followed by some two-qubit decomposition/synthesis before repeating. The documentation states for this highest level optimization configuration, “advanced optimizations are performed, including matrix optimization, two-qubit gate cancellation, and single-qubit gate merging.”</p>
+</section>
+<section id="demangling-and-dependencies" class="level3">
+<h3 class="anchored" data-anchor-id="demangling-and-dependencies">Demangling and dependencies</h3>
+<p>Before wrapping up, I did want to poke a little bit more at the shared object files to learn a little more of what is used. For my mac, running the code below demangles the symbols of the shared library and then collects them by C++ namespace and name. Note this just looks at the transpilation module from pyqpanda3.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">nm</span> <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">--demangle</span> transpilation.cpython-313-darwin.so <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">\</span></span>
+<span id="cb2-2">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">|</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">awk</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'{print $3}'</span> <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">\</span></span>
+<span id="cb2-3">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">|</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">grep</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'::'</span> <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">\</span></span>
+<span id="cb2-4">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">|</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sed</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'s/(.*//g'</span> <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">\</span></span>
+<span id="cb2-5">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">|</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">awk</span> <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">-F</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'::'</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'{print $1"::"$2}'</span> <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">\</span></span>
+<span id="cb2-6">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">|</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sort</span> <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">-u</span></span></code></pre></div></div>
+<p>Most are in <code>QPanda3</code>, but we do see a use of <a href="https://eigen.tuxfamily.org/index.php?title=Main_Page"><code>Eigen</code></a> for linear algebra and <a href="https://github.com/fmtlib/fmt"><code>fmt</code></a> for string formatting. You can also see a bunch of functions like <code>QPanda3::translate_rxx_to_cx_rz_h</code>, which correspond to the built-in gate rewrite rules.</p>
+Expand below to see all the symbols.
+<details>
+<summary>
+List of symbols
+</summary>
+_compute_theta:: _dec_uc_sqg:: calculate_score:: check_gate_connected:: CompilerOriginIR::IRQProgNodeCollectorParser CompilerOriginIR::OriginIRScanner CompilerParser::Parser CompilerParser::Scanner dfs:: Eigen::internal fmt::v11 generateBinarySeries:: generateCombinations:: longest_path_dfs:: modArray:: pybind11::error_already_set QPanda3::amplitude_damping_error QPanda3::BasicTranslationPass QPanda3::block_index_map_key QPanda3::cancellation_map_key QPanda3::ChipBackend QPanda3::CPUAvx2 QPanda3::CPUQVM QPanda3::create_gate QPanda3::DAG QPanda3::DAGNode QPanda3::DAGQCircuit QPanda3::decoherence_error QPanda3::decompose QPanda3::decompose_to_RPhi QPanda3::decomposeTensorProduct QPanda3::DefaultTranspilationPasses QPanda3::depolarizing_error QPanda3::diagonal_decomposition QPanda3::DrawByLayer QPanda3::DrawPicture QPanda3::EquivalenceLibrary QPanda3::GateUnitaryMatrix QPanda3::GateUnitaryMatrixUtils QPanda3::generate_topology QPanda3::get_precessor_single_gates_map QPanda3::get_unitary_matrix QPanda3::get_unitary_matrix_order QPanda3::GetUsedQubits QPanda3::InitPass QPanda3::is_double_gate QPanda3::is_single_gate QPanda3::is_supported_avx2 QPanda3::is_tensor_product QPanda3::isometry_decomposition QPanda3::IsometryDecomposition QPanda3::Karus QPanda3::LayoutPass QPanda3::LinearDepthDecomposition QPanda3::MPS_Tensor QPanda3::NameGenerator QPanda3::NoiseCircuit QPanda3::NoiseModel QPanda3::NoiseUtils QPanda3::OCircuitFusion QPanda3::operator&lt;&lt; QPanda3::OptimizationPass QPanda3::pauli_x_error QPanda3::pauli_y_error QPanda3::pauli_z_error QPanda3::phase_damping_error QPanda3::pre_handle QPanda3::QCircuit QPanda3::QGate QPanda3::QGateImplementation QPanda3::QMeasure QPanda3::QOracle QPanda3::QPandaOptions QPanda3::QProg QPanda3::QProgProcessor QPanda3::QResult QPanda3::QSDecomposition QPanda3::QStateCPU QPanda3::QStateMPS QPanda3::QuantumError QPanda3::QuantumInformation QPanda3::QuantumRegister QPanda3::QuantumState QPanda3::remap_qgate QPanda3::RoutingPass QPanda3::SabrePreLayout QPanda3::SchedulingPass QPanda3::SingletonPermutation QPanda3::task QPanda3::translate_ch_to_cx_h_p QPanda3::translate_cp_to_cx_p QPanda3::translate_crphi_to_oracle QPanda3::translate_crx_to_cx_u1_u3 QPanda3::translate_cry_to_cx_ry QPanda3::translate_crz_to_cx_rz QPanda3::translate_cu1_to_cx_u1 QPanda3::translate_cu2_to_cx_u1_u3 QPanda3::translate_cu3_to_cx_u1_u3 QPanda3::translate_cu4_to_cx_p_u3 QPanda3::translate_cx_to_cp_u3 QPanda3::translate_cx_to_cz_h QPanda3::translate_cx_to_cz_rz_x1 QPanda3::translate_cy_to_cx_p QPanda3::translate_cz_to_cx_h QPanda3::translate_h_to_rx_ry QPanda3::translate_h_to_RZ_X1 QPanda3::translate_h_to_u2 QPanda3::translate_i_to_u1 QPanda3::translate_iswap_to_cx_s_h QPanda3::translate_oracle_to_cz_u4 QPanda3::translate_p_to_RZ QPanda3::translate_p_to_u1 QPanda3::translate_rphi_to_u3 QPanda3::translate_rx_to_rz_x1 QPanda3::translate_rx_to_u3 QPanda3::translate_rxx_to_cx_rz_h QPanda3::translate_ry_to_rz_x1 QPanda3::translate_ry_to_u3 QPanda3::translate_ryy_to_cx_rx_rz QPanda3::translate_rz_to_u1 QPanda3::translate_rzx_to_cx_rz_h QPanda3::translate_rzz_to_cx_rz QPanda3::translate_s_to_RZ QPanda3::translate_s_to_u1 QPanda3::translate_sqiswap_to_cz_rz_x1 QPanda3::translate_swap_to_cx QPanda3::translate_t_to_RZ QPanda3::translate_t_to_u1 QPanda3::translate_u1_to_u3 QPanda3::translate_u2_to_u3 QPanda3::translate_u3_to_rphi_rz QPanda3::translate_u3_to_rx_rz QPanda3::translate_u3_to_u4 QPanda3::translate_u3_to_x1_rz QPanda3::translate_u4_to_u3 QPanda3::translate_u4_to_x1_rz QPanda3::translate_x_to_rx QPanda3::translate_x_to_u3 QPanda3::translate_x_to_x1 QPanda3::translate_x1_to_rphi QPanda3::translate_x1_to_rx QPanda3::translate_y_to_ry QPanda3::translate_y_to_u3 QPanda3::translate_y_to_x1_rz QPanda3::translate_y1_to_rz_x1 QPanda3::translate_z_to_rz QPanda3::translate_z_to_u1 QPanda3::translate_z1_to_rz QPanda3::TranspilationPass QPanda3::Transpiler QPanda3::TwoQubitBasisDecomposer QPanda3::TwoQubitWeylDecomposition QPanda3::uc_decomposition QPanda3::ucry_circuit QPanda3::ucry_decomposition QPanda3::ucrz_decomposition QPanda3::unroll_quantum_circuit QPandaCompiler::QProgNodeCollector std::__1 Utils::convert_int_to_str Utils::convert_uinteger_to_binary Utils::number_to_base_string WriteQCircuitTextFile::get_instance
+</details>
+</section>
+</section>
+<section id="tldr" class="level2">
+<h2 class="anchored" data-anchor-id="tldr">TL;DR</h2>
+<p>The most surprising finding for <code>pyqpanda3</code> is that the vast majority of the runtime (71%) was spent in the <code>convert_qasm_string_to_qprog</code> function parsing the QASM input, not optimizing the circuit. This is due to overhead in its C++ implementation, specifically from using standard library streams and locales, which could be made leaner for a fixed format like QASM.</p>
+<p>The actual transpilation is remarkably fast. While it’s closed source, profiling and demangling the library revealed a multi-stage strategy involving a DAG representation, unitary synthesis, and <a href="https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.synthesis.TwoQubitWeylDecomposition">Weyl decomposition</a>. This peek under the hood also showed its reliance on the popular Eigen and fmt libraries. But it would be great to better understand how these steps are combined to give such strong performance!</p>
+<p><em>AI Disclaimer</em>: I’ve used LLMs to review and give feedback on this post, but the original content was written by me.</p>
+
+
+</section>
+
+
+ ]]></description>
+  <guid>https://bachase.github.io/posts/profiling-quantum-compilers-pyqpanda/</guid>
+  <pubDate>Wed, 01 Oct 2025 00:00:00 GMT</pubDate>
+</item>
 <item>
   <title>Profiling Quantum Compilers: pytket</title>
   <link>https://bachase.github.io/posts/profiling-quantum-compilers-pytket/</link>
@@ -1096,6 +1281,7 @@ font-style: inherit;">--</span> python main.py</span></code></pre></div></div>
 <p>With that whirlwind tour of profiling behind us, how will we explore quantum compilers? <a href="https://github.com/bachase/quantum-compiler-profiling">https://github.com/bachase/quantum-compiler-profiling</a> is a repository with all you need!</p>
 <p>The code uses a 100-qubit QFT circuit in <a href="https://github.com/unitaryfoundation/ucc-bench"><code>ucc-bench</code></a> (by way of <a href="https://github.com/Qiskit/benchpress">benchpress</a> and <a href="https://github.com/pnnl/QASMBench">QASMBench</a>). The script in <code>main.py</code> then transpiles/compiles this circuit via <a href="https://www.ibm.com/quantum/qiskit">Qiskit</a>, <a href="https://github.com/unitaryfoundation/ucc"><code>ucc</code></a>, <a href="https://docs.quantinuum.com/tket/api-docs/index.html">pytket</a>, <a href="https://quantumai.google/cirq">Cirq</a>, or <a href="https://pypi.org/project/pyqpanda3/">pyqpanda3</a>. There’s a corresponding <code>run_bench.sh</code> to generate the profiles using <code>py-spy</code>, and there are sub-directories with some profiles checked in<sup>6</sup>. I generated these profiles under a GitHub codespace (which you can do yourself by forking within GitHub). A tad more detail is in the <code>README</code>, but the upshot is we will use speedscope to explore each compiler’s results in the <a href="https://github.com/bachase/quantum-compiler-profiling/tree/main/native.profiles"><code>native.profiles</code></a> directory in future posts.</p>
 <div class="no-row-height column-margin column-container"><div id="fn6"><p><sup>6</sup>&nbsp;I ran profiles with &amp; without <code>--function</code> to aggregate samples to start of functions. I don’t a priori know much about each function. Some might be lengthy with lots of internal loops, so I’d rather keep samples of different lines separate to potentially identify that structure. But having the aggregated view with <code>--function</code> will also help coarse grain over those details when first analyzing results.</p></div></div><p>The QFT circuit was chosen based in recent <code>ucc-bench</code> <a href="https://github.com/unitaryfoundation/ucc-bench/blob/main/results/ucc-benchmarks-8-core-U22.04/compilation_benchmarks/20250819/20250819125708.eca4a630a31567ea794b1e8f90d5038928110223.compilation.csv">performance results</a>:</p>
+<p><a id="benchmark-summary"></a></p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 17%">
