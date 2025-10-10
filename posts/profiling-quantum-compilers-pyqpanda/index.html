@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2025-10-01">
+<meta name="dcterms.date" content="2025-10-09">
 
 <title>Profiling Quantum Compilers: pyqpanda – bachase notes</title>
 <style>
@@ -172,7 +172,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">October 1, 2025</p>
+      <p class="date">October 9, 2025</p>
     </div>
   </div>
   
@@ -217,7 +217,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>pyqpanda3 is quite fast, but it’s notable that it spends more time parsing than transpiling the circuit.</p>
 <p><img src="./pyqpanda_parse.png" class="img-fluid"></p>
 <p>In the sandwich view above, we see what is likely a hand-built parser + tokenizer. The hierarchy of calls to <span class="circle">1</span> show the parser side, where a program is comprised of statements, which can probably be quantum or classical. Our QASM file is all quantum ones that are gate calls with operands. Below those parsers in <span class="circle">2</span> you can see a call to <code>CompilerQASM::QASMScanner::next</code> that pulls out the next token for the parser.</p>
-<p>Under the hood this is using C++ standard library streams for this. For example, the <code>CompilerParser::Scanner::consumeNumberLiteral</code> uses a C++ <a href="https://en.cppreference.com/w/cpp/io/basic_stringstream.html"><code>stringstream</code></a> to read into the number. There is some overhead from streams dealing with <a href="https://en.cppreference.com/w/cpp/locale/locale.html"><code>locales</code></a> (also in <span class="circle">3</span> when calling <code>CompilerParser::Token::toString</code>). Specifically, parsing will have to call locale facets (ctype, numpunct, num_get) to classify characters and handle decimal points/thousands separators that may differ by region. Streams and locales alos have bookkeeping on whitespace and stream state. These can involve a few layers of indirection (via virtual function dispatch) that are a tad heavy for these short parsing calls. I’m nitpicking here, but given QASM has a specification, you might get more performance here with a leaner/purpose-built parser.</p>
+<p>Under the hood this is using C++ standard library streams for this. For example, the <code>CompilerParser::Scanner::consumeNumberLiteral</code> uses a C++ <a href="https://en.cppreference.com/w/cpp/io/basic_stringstream.html"><code>stringstream</code></a> to read into the number. There is some overhead from streams dealing with <a href="https://en.cppreference.com/w/cpp/locale/locale.html"><code>locales</code></a> (also in <span class="circle">3</span> when calling <code>CompilerParser::Token::toString</code>). Specifically, parsing will have to call locale facets (ctype, numpunct, num_get) to classify characters and handle decimal points/thousands separators that may differ by region. Streams and locales also have bookkeeping on whitespace and stream state. These can involve a few layers of indirection (via virtual function dispatch) that are a tad heavy for these short parsing calls. I’m nitpicking here, but given QASM has a specification, you might get more performance here with a leaner/purpose-built parser.</p>
 </section>
 <section id="transpiling" class="level3 page-columns page-full">
 <h3 class="anchored" data-anchor-id="transpiling">Transpiling</h3>
@@ -231,7 +231,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><span class="circle">3</span> [280ms] in <code>BasicTranslationPass::merage_and_translation</code> (typo is in the original binary). Here, I see calls like <code>translate_cz_to_cx_h</code>, <code>translate_oracle_to_cz_u4</code>, <code>translate_u3_to_rx_rz</code>. I also see a stack of calls for <code>TwoQubitBasisDecomposer</code> that has a <code>Weyl</code> decomposition. All of these are repeated a few times, suggesting some looping pass.</li>
 </ul>
 </div>
-<p>Unfortunately, its hard to backout the overall strategy here. But it looks like some standard translation/substitution rules, and then some consolidation followed by some two-qubit decomposition/synthesis before repeating. The documentation states for this highest level optimization configuration, “advanced optimizations are performed, including matrix optimization, two-qubit gate cancellation, and single-qubit gate merging.”</p>
+<p>Unfortunately, its hard to backout the overall strategy here. The documentation states for this highest level optimization configuration, “advanced optimizations are performed, including matrix optimization, two-qubit gate cancellation, and single-qubit gate merging.” In practice, that looks like some standard translation/substitution rules, and then some consolidation followed by some two-qubit decomposition/synthesis before repeating.</p>
 </section>
 <section id="demangling-and-dependencies" class="level3">
 <h3 class="anchored" data-anchor-id="demangling-and-dependencies">Demangling and dependencies</h3>
@@ -248,7 +248,169 @@ Expand below to see all the symbols.
 <summary>
 List of symbols
 </summary>
-_compute_theta:: _dec_uc_sqg:: calculate_score:: check_gate_connected:: CompilerOriginIR::IRQProgNodeCollectorParser CompilerOriginIR::OriginIRScanner CompilerParser::Parser CompilerParser::Scanner dfs:: Eigen::internal fmt::v11 generateBinarySeries:: generateCombinations:: longest_path_dfs:: modArray:: pybind11::error_already_set QPanda3::amplitude_damping_error QPanda3::BasicTranslationPass QPanda3::block_index_map_key QPanda3::cancellation_map_key QPanda3::ChipBackend QPanda3::CPUAvx2 QPanda3::CPUQVM QPanda3::create_gate QPanda3::DAG QPanda3::DAGNode QPanda3::DAGQCircuit QPanda3::decoherence_error QPanda3::decompose QPanda3::decompose_to_RPhi QPanda3::decomposeTensorProduct QPanda3::DefaultTranspilationPasses QPanda3::depolarizing_error QPanda3::diagonal_decomposition QPanda3::DrawByLayer QPanda3::DrawPicture QPanda3::EquivalenceLibrary QPanda3::GateUnitaryMatrix QPanda3::GateUnitaryMatrixUtils QPanda3::generate_topology QPanda3::get_precessor_single_gates_map QPanda3::get_unitary_matrix QPanda3::get_unitary_matrix_order QPanda3::GetUsedQubits QPanda3::InitPass QPanda3::is_double_gate QPanda3::is_single_gate QPanda3::is_supported_avx2 QPanda3::is_tensor_product QPanda3::isometry_decomposition QPanda3::IsometryDecomposition QPanda3::Karus QPanda3::LayoutPass QPanda3::LinearDepthDecomposition QPanda3::MPS_Tensor QPanda3::NameGenerator QPanda3::NoiseCircuit QPanda3::NoiseModel QPanda3::NoiseUtils QPanda3::OCircuitFusion QPanda3::operator&lt;&lt; QPanda3::OptimizationPass QPanda3::pauli_x_error QPanda3::pauli_y_error QPanda3::pauli_z_error QPanda3::phase_damping_error QPanda3::pre_handle QPanda3::QCircuit QPanda3::QGate QPanda3::QGateImplementation QPanda3::QMeasure QPanda3::QOracle QPanda3::QPandaOptions QPanda3::QProg QPanda3::QProgProcessor QPanda3::QResult QPanda3::QSDecomposition QPanda3::QStateCPU QPanda3::QStateMPS QPanda3::QuantumError QPanda3::QuantumInformation QPanda3::QuantumRegister QPanda3::QuantumState QPanda3::remap_qgate QPanda3::RoutingPass QPanda3::SabrePreLayout QPanda3::SchedulingPass QPanda3::SingletonPermutation QPanda3::task QPanda3::translate_ch_to_cx_h_p QPanda3::translate_cp_to_cx_p QPanda3::translate_crphi_to_oracle QPanda3::translate_crx_to_cx_u1_u3 QPanda3::translate_cry_to_cx_ry QPanda3::translate_crz_to_cx_rz QPanda3::translate_cu1_to_cx_u1 QPanda3::translate_cu2_to_cx_u1_u3 QPanda3::translate_cu3_to_cx_u1_u3 QPanda3::translate_cu4_to_cx_p_u3 QPanda3::translate_cx_to_cp_u3 QPanda3::translate_cx_to_cz_h QPanda3::translate_cx_to_cz_rz_x1 QPanda3::translate_cy_to_cx_p QPanda3::translate_cz_to_cx_h QPanda3::translate_h_to_rx_ry QPanda3::translate_h_to_RZ_X1 QPanda3::translate_h_to_u2 QPanda3::translate_i_to_u1 QPanda3::translate_iswap_to_cx_s_h QPanda3::translate_oracle_to_cz_u4 QPanda3::translate_p_to_RZ QPanda3::translate_p_to_u1 QPanda3::translate_rphi_to_u3 QPanda3::translate_rx_to_rz_x1 QPanda3::translate_rx_to_u3 QPanda3::translate_rxx_to_cx_rz_h QPanda3::translate_ry_to_rz_x1 QPanda3::translate_ry_to_u3 QPanda3::translate_ryy_to_cx_rx_rz QPanda3::translate_rz_to_u1 QPanda3::translate_rzx_to_cx_rz_h QPanda3::translate_rzz_to_cx_rz QPanda3::translate_s_to_RZ QPanda3::translate_s_to_u1 QPanda3::translate_sqiswap_to_cz_rz_x1 QPanda3::translate_swap_to_cx QPanda3::translate_t_to_RZ QPanda3::translate_t_to_u1 QPanda3::translate_u1_to_u3 QPanda3::translate_u2_to_u3 QPanda3::translate_u3_to_rphi_rz QPanda3::translate_u3_to_rx_rz QPanda3::translate_u3_to_u4 QPanda3::translate_u3_to_x1_rz QPanda3::translate_u4_to_u3 QPanda3::translate_u4_to_x1_rz QPanda3::translate_x_to_rx QPanda3::translate_x_to_u3 QPanda3::translate_x_to_x1 QPanda3::translate_x1_to_rphi QPanda3::translate_x1_to_rx QPanda3::translate_y_to_ry QPanda3::translate_y_to_u3 QPanda3::translate_y_to_x1_rz QPanda3::translate_y1_to_rz_x1 QPanda3::translate_z_to_rz QPanda3::translate_z_to_u1 QPanda3::translate_z1_to_rz QPanda3::TranspilationPass QPanda3::Transpiler QPanda3::TwoQubitBasisDecomposer QPanda3::TwoQubitWeylDecomposition QPanda3::uc_decomposition QPanda3::ucry_circuit QPanda3::ucry_decomposition QPanda3::ucrz_decomposition QPanda3::unroll_quantum_circuit QPandaCompiler::QProgNodeCollector std::__1 Utils::convert_int_to_str Utils::convert_uinteger_to_binary Utils::number_to_base_string WriteQCircuitTextFile::get_instance
+<pre><code>_compute_theta::
+_dec_uc_sqg::
+calculate_score::
+check_gate_connected::
+CompilerOriginIR::IRQProgNodeCollectorParser
+CompilerOriginIR::OriginIRScanner
+CompilerParser::Parser
+CompilerParser::Scanner
+dfs::
+Eigen::internal
+fmt::v11
+generateBinarySeries::
+generateCombinations::
+longest_path_dfs::
+modArray::
+pybind11::error_already_set
+QPanda3::amplitude_damping_error
+QPanda3::BasicTranslationPass
+QPanda3::block_index_map_key
+QPanda3::cancellation_map_key
+QPanda3::ChipBackend
+QPanda3::CPUAvx2
+QPanda3::CPUQVM
+QPanda3::create_gate
+QPanda3::DAG
+QPanda3::DAGNode
+QPanda3::DAGQCircuit
+QPanda3::decoherence_error
+QPanda3::decompose
+QPanda3::decompose_to_RPhi
+QPanda3::decomposeTensorProduct
+QPanda3::DefaultTranspilationPasses
+QPanda3::depolarizing_error
+QPanda3::diagonal_decomposition
+QPanda3::DrawByLayer
+QPanda3::DrawPicture
+QPanda3::EquivalenceLibrary
+QPanda3::GateUnitaryMatrix
+QPanda3::GateUnitaryMatrixUtils
+QPanda3::generate_topology
+QPanda3::get_precessor_single_gates_map
+QPanda3::get_unitary_matrix
+QPanda3::get_unitary_matrix_order
+QPanda3::GetUsedQubits
+QPanda3::InitPass
+QPanda3::is_double_gate
+QPanda3::is_single_gate
+QPanda3::is_supported_avx2
+QPanda3::is_tensor_product
+QPanda3::isometry_decomposition
+QPanda3::IsometryDecomposition
+QPanda3::Karus
+QPanda3::LayoutPass
+QPanda3::LinearDepthDecomposition
+QPanda3::MPS_Tensor
+QPanda3::NameGenerator
+QPanda3::NoiseCircuit
+QPanda3::NoiseModel
+QPanda3::NoiseUtils
+QPanda3::OCircuitFusion
+QPanda3::operator&lt;&lt;
+QPanda3::OptimizationPass
+QPanda3::pauli_x_error
+QPanda3::pauli_y_error
+QPanda3::pauli_z_error
+QPanda3::phase_damping_error
+QPanda3::pre_handle
+QPanda3::QCircuit
+QPanda3::QGate
+QPanda3::QGateImplementation
+QPanda3::QMeasure
+QPanda3::QOracle
+QPanda3::QPandaOptions
+QPanda3::QProg
+QPanda3::QProgProcessor
+QPanda3::QResult
+QPanda3::QSDecomposition
+QPanda3::QStateCPU
+QPanda3::QStateMPS
+QPanda3::QuantumError
+QPanda3::QuantumInformation
+QPanda3::QuantumRegister
+QPanda3::QuantumState
+QPanda3::remap_qgate
+QPanda3::RoutingPass
+QPanda3::SabrePreLayout
+QPanda3::SchedulingPass
+QPanda3::SingletonPermutation
+QPanda3::task
+QPanda3::translate_ch_to_cx_h_p
+QPanda3::translate_cp_to_cx_p
+QPanda3::translate_crphi_to_oracle
+QPanda3::translate_crx_to_cx_u1_u3
+QPanda3::translate_cry_to_cx_ry
+QPanda3::translate_crz_to_cx_rz
+QPanda3::translate_cu1_to_cx_u1
+QPanda3::translate_cu2_to_cx_u1_u3
+QPanda3::translate_cu3_to_cx_u1_u3
+QPanda3::translate_cu4_to_cx_p_u3
+QPanda3::translate_cx_to_cp_u3
+QPanda3::translate_cx_to_cz_h
+QPanda3::translate_cx_to_cz_rz_x1
+QPanda3::translate_cy_to_cx_p
+QPanda3::translate_cz_to_cx_h
+QPanda3::translate_h_to_rx_ry
+QPanda3::translate_h_to_RZ_X1
+QPanda3::translate_h_to_u2
+QPanda3::translate_i_to_u1
+QPanda3::translate_iswap_to_cx_s_h
+QPanda3::translate_oracle_to_cz_u4
+QPanda3::translate_p_to_RZ
+QPanda3::translate_p_to_u1
+QPanda3::translate_rphi_to_u3
+QPanda3::translate_rx_to_rz_x1
+QPanda3::translate_rx_to_u3
+QPanda3::translate_rxx_to_cx_rz_h
+QPanda3::translate_ry_to_rz_x1
+QPanda3::translate_ry_to_u3
+QPanda3::translate_ryy_to_cx_rx_rz
+QPanda3::translate_rz_to_u1
+QPanda3::translate_rzx_to_cx_rz_h
+QPanda3::translate_rzz_to_cx_rz
+QPanda3::translate_s_to_RZ
+QPanda3::translate_s_to_u1
+QPanda3::translate_sqiswap_to_cz_rz_x1
+QPanda3::translate_swap_to_cx
+QPanda3::translate_t_to_RZ
+QPanda3::translate_t_to_u1
+QPanda3::translate_u1_to_u3
+QPanda3::translate_u2_to_u3
+QPanda3::translate_u3_to_rphi_rz
+QPanda3::translate_u3_to_rx_rz
+QPanda3::translate_u3_to_u4
+QPanda3::translate_u3_to_x1_rz
+QPanda3::translate_u4_to_u3
+QPanda3::translate_u4_to_x1_rz
+QPanda3::translate_x_to_rx
+QPanda3::translate_x_to_u3
+QPanda3::translate_x_to_x1
+QPanda3::translate_x1_to_rphi
+QPanda3::translate_x1_to_rx
+QPanda3::translate_y_to_ry
+QPanda3::translate_y_to_u3
+QPanda3::translate_y_to_x1_rz
+QPanda3::translate_y1_to_rz_x1
+QPanda3::translate_z_to_rz
+QPanda3::translate_z_to_u1
+QPanda3::translate_z1_to_rz
+QPanda3::TranspilationPass
+QPanda3::Transpiler
+QPanda3::TwoQubitBasisDecomposer
+QPanda3::TwoQubitWeylDecomposition
+QPanda3::uc_decomposition
+QPanda3::ucry_circuit
+QPanda3::ucry_decomposition
+QPanda3::ucrz_decomposition
+QPanda3::unroll_quantum_circuit
+QPandaCompiler::QProgNodeCollector
+std::__1
+Utils::convert_int_to_str
+Utils::convert_uinteger_to_binary
+Utils::number_to_base_string
+WriteQCircuitTextFile::get_instance</code></pre>
 </details>
 </section>
 </section>
