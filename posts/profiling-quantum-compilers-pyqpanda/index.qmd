@@ -1,6 +1,6 @@
 ---
 title: "Profiling Quantum Compilers: pyqpanda"
-date: 2025-10-01
+date: 2025-10-09
 #date-modified:
 ---
 
@@ -48,7 +48,7 @@ pyqpanda3 is quite fast, but it's notable that it spends more time parsing than 
 
 In the sandwich view above, we see what is likely a hand-built parser + tokenizer. The hierarchy of calls to <span class="circle">1</span> show the parser side, where a program is comprised of statements, which can probably be quantum or classical. Our QASM file is all quantum ones that are gate calls with operands. Below those parsers in <span class="circle">2</span> you can see a call to `CompilerQASM::QASMScanner::next` that pulls out the next token for the parser.
 
-Under the hood this is using C++ standard library streams for this. For example, the `CompilerParser::Scanner::consumeNumberLiteral` uses a C++ [`stringstream`](https://en.cppreference.com/w/cpp/io/basic_stringstream.html) to read into the number. There is some overhead from streams dealing with [`locales`](https://en.cppreference.com/w/cpp/locale/locale.html) (also in <span class="circle">3</span> when calling `CompilerParser::Token::toString`). Specifically, parsing will have to call locale facets (ctype, numpunct, num_get) to classify characters and handle decimal points/thousands separators that may differ by region. Streams and locales alos have bookkeeping on whitespace and stream state. These can involve a few layers of indirection (via virtual function dispatch) that are a tad heavy for these short parsing calls. I'm nitpicking here, but given QASM has a specification, you might get more performance here with a leaner/purpose-built parser.
+Under the hood this is using C++ standard library streams for this. For example, the `CompilerParser::Scanner::consumeNumberLiteral` uses a C++ [`stringstream`](https://en.cppreference.com/w/cpp/io/basic_stringstream.html) to read into the number. There is some overhead from streams dealing with [`locales`](https://en.cppreference.com/w/cpp/locale/locale.html) (also in <span class="circle">3</span> when calling `CompilerParser::Token::toString`). Specifically, parsing will have to call locale facets (ctype, numpunct, num_get) to classify characters and handle decimal points/thousands separators that may differ by region. Streams and locales also have bookkeeping on whitespace and stream state. These can involve a few layers of indirection (via virtual function dispatch) that are a tad heavy for these short parsing calls. I'm nitpicking here, but given QASM has a specification, you might get more performance here with a leaner/purpose-built parser.
 
 ### Transpiling
 
@@ -66,7 +66,7 @@ This timeline view zooms in on the transpilation call, which has three main phas
 - <span class="circle">3</span> [280ms] in `BasicTranslationPass::merage_and_translation` (typo is in the original binary). Here, I see calls like `translate_cz_to_cx_h`, `translate_oracle_to_cz_u4`, `translate_u3_to_rx_rz`. I also see a stack of calls for `TwoQubitBasisDecomposer` that has a `Weyl` decomposition. All of these are repeated a few times, suggesting some looping pass.
 :::
 
-Unfortunately, its hard to backout the overall strategy here. But it looks like some standard translation/substitution rules, and then some consolidation followed by some two-qubit decomposition/synthesis before repeating. The documentation states for this highest level optimization configuration, "advanced optimizations are performed, including matrix optimization, two-qubit gate cancellation, and single-qubit gate merging."
+Unfortunately, its hard to backout the overall strategy here. The documentation states for this highest level optimization configuration, "advanced optimizations are performed, including matrix optimization, two-qubit gate cancellation, and single-qubit gate merging." In practice, that looks like some standard translation/substitution rules, and then some consolidation followed by some two-qubit decomposition/synthesis before repeating.
 
 ### Demangling and dependencies
 
@@ -86,6 +86,8 @@ Most are in `QPanda3`, but we do see a use of [`Eigen`](https://eigen.tuxfamily.
 Expand below to see all the symbols.
 <details>
 <summary>List of symbols</summary>
+
+```
 _compute_theta::
 _dec_uc_sqg::
 calculate_score::
@@ -249,6 +251,8 @@ Utils::convert_int_to_str
 Utils::convert_uinteger_to_binary
 Utils::number_to_base_string
 WriteQCircuitTextFile::get_instance
+```
+
 </details>
 
 ## TL;DR
